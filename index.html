@@ -537,7 +537,7 @@ function checkDefeat(){
   if(own().length===0&&!G.fleets.some(f=>f.ships.colony>0)){G.lost=true;showDefeat()}
 }
 function launch(srcP,tsys,tplanet,mission,ships){
-  const a=SYS(srcP.sys),b=SYS(tsys),d=dist(a,b),ks=Object.keys(ships).filter(k=>ships[k]>0);
+  const a=SYS(srcP.sys),b=SYS(tsys),d=routeDist(srcP,tsys,tplanet,G.fid+1),ks=Object.keys(ships).filter(k=>ships[k]>0);
   const spd=Math.min(...ks.map(k=>SH[k].spd))*spdMul(),dur=Math.max(1.5,d/spd);
   const fuel=Math.ceil(ks.reduce((s,k)=>s+SH[k].fr*ships[k]*Math.max(d,60)/10,0)*fuelMul());
   if(G.res.f<fuel)return false;
@@ -1349,6 +1349,12 @@ function fleetPos(f){
   return{x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,ang:Math.atan2((b.y-a.y)*(f.phase==='out'?1:-1),(b.x-a.x)*(f.phase==='out'?1:-1)),a,b};
 }
 const orbPos=p=>{const s0=SYS(p.sys),i=Math.max(0,s0.pl.indexOf(p.id)),a=(p.seed%628)/100+ANIM*.25/(1+i*.6),r=22+i*13;return[Math.cos(a)*r,Math.sin(a)*r]};
+// quãng đường thật: từ vị trí tàu rời hành tinh xuất phát (trên quỹ đạo) tới hành tinh đích
+function routeDist(sp,tsys,tp,fid){
+  const a=SYS(sp.sys),b=SYS(tsys),oa=orbPos(sp),ob=tp!=null?orbPos(PL(tp)):(sp.sys===tsys?[Math.cos(fid*1.7)*85,Math.sin(fid*1.7)*85]:[0,0]);
+  const A=rotp(a.x,a.y),B=rotp(b.x,b.y);
+  return Math.hypot(B[0]+ob[0]-A[0]-oa[0],B[1]+ob[1]-A[1]-oa[1]);
+}
 function sameSysPos(f){
   const A=orbPos(PL(f.src)),B=f.tp!=null?orbPos(PL(f.tp)):[Math.cos(f.id*1.7)*85,Math.sin(f.id*1.7)*85];
   const t=clamp((G.t-f.t0)/Math.max(1e-6,f.t1-f.t0),0,1),out=f.phase==='out',u=out?t:(f.u0??1)*(1-t);
@@ -1748,12 +1754,12 @@ function fmUpdate(){
   const ms=fmMissions();if(!ms.some(m=>m[0]===FM.ms))FM.ms=(ms.find(m=>m[0]==='intercept')||ms.find(m=>m[0]==='survey')||ms.find(m=>m[0]==='colonize')||ms.find(m=>m[0]==='attack')||ms.find(m=>m[0]==='defend')||ms.find(m=>m[0]==='expedition')||ms[0])[0];
   $('#fm-ms').innerHTML=ms.map(m=>`<option value="${m[0]}" ${m[0]===FM.ms?'selected':''}>${m[1]}</option>`).join('');
   const ships={};let tot=0;for(const k in FM.n){const v=clamp(Math.floor(+FM.n[k]||0),0,PL(FM.src).ships[k]||0);if(v>0){ships[k]=v;tot+=v}}
-  const a=SYS(PL(FM.src).sys),b=SYS(FM.ts),d=dist(a,b);let err='',info='';
+  const a=SYS(PL(FM.src).sys),b=SYS(FM.ts),d=routeDist(PL(FM.src),FM.ts,FM.tp,G.fid+1);let err='',info='';
   if(!tot)err='Hãy chọn ít nhất 1 tàu.';
   else{
     const ks=Object.keys(ships),spd=Math.min(...ks.map(k=>SH[k].spd))*spdMul(),dur=Math.max(1.5,d/spd),fuel=Math.ceil(ks.reduce((s,k)=>s+SH[k].fr*ships[k]*Math.max(d,60)/10,0)*fuelMul());
     const fs=fstats(ships);
-    info=`Khoảng cách ${Math.round(d)} · Đến nơi sau <b>${fmtT(dur)}</b><br>Nhiên liệu: <span class="${G.res.f>=fuel?'':'bad'}">${ic('f')}${fuel}</span> · Công ${Math.round(fs.atk)} · Máu ${Math.round(fs.hp)}`;
+    info=`Quãng đường ≈${Math.round(d)} (từ hành tinh xuất phát tới đích) · Đến nơi sau <b>${fmtT(dur)}</b><br>Nhiên liệu: <span class="${G.res.f>=fuel?'':'bad'}">${ic('f')}${fuel}</span> · Công ${Math.round(fs.atk)} · Máu ${Math.round(fs.hp)}`;
     if(G.res.f<fuel)err='Không đủ nhiên liệu.';
     if(FM.ms==='colonize'&&!(ships.colony>0))err='Cần ít nhất 1 Tàu thực dân.';
     if(FM.ms==='attack'&&fs.atk<=0)err='Cần tàu chiến để tấn công.';
@@ -1896,7 +1902,7 @@ resize();
 if(!load()){newGame(Math.floor(Math.random()*1e9),1,300);UI.sys=0;UI.pl=0}
 else{UI.sys=0;UI.pl=0}
 cam.z=1;focus(SYS(0).x,SYS(0).y);
-window.__NH={sameSysPos,orbPos,defEstimate,needS,scheduleRaid,adaptDoc,checkDefeat,RANKS,facDoc,hiveD,isHost,setCoop,assaultNatives,coopSpec,SPEC,ATN,RACES,raceURL,raceAttrs,surveyPlanet,genMult,shipTier,shipURL,shipCanvas,tierMap,SHCOL,fx,fxRefresh,techDesc,TECH,get G(){return G},step,act,UI:()=>UI,launch,fstats,fight,npcDef,pinfo,rates,mulVs,mulOf,techReqOk,cam:()=>cam,fxBurst,fxBattle,fxRing,FX,startCrisis,spawnWave,endCrisis,crisisTick,expedition,reconPlanet,interceptRaid,knownDp,polSlots,POL,shipCost,newGame,BAL,DIFF,fmtT,rateStr,load,save,FACDOC:o=>facDoc(o),SHSPD:k=>SH[k].spd,spdMul};
+window.__NH={routeDist,sameSysPos,orbPos,defEstimate,needS,scheduleRaid,adaptDoc,checkDefeat,RANKS,facDoc,hiveD,isHost,setCoop,assaultNatives,coopSpec,SPEC,ATN,RACES,raceURL,raceAttrs,surveyPlanet,genMult,shipTier,shipURL,shipCanvas,tierMap,SHCOL,fx,fxRefresh,techDesc,TECH,get G(){return G},step,act,UI:()=>UI,launch,fstats,fight,npcDef,pinfo,rates,mulVs,mulOf,techReqOk,cam:()=>cam,fxBurst,fxBattle,fxRing,FX,startCrisis,spawnWave,endCrisis,crisisTick,expedition,reconPlanet,interceptRaid,knownDp,polSlots,POL,shipCost,newGame,BAL,DIFF,fmtT,rateStr,load,save,FACDOC:o=>facDoc(o),SHSPD:k=>SH[k].spd,spdMul};
 renderPanel();renderTop();
 if(!G.intro)showIntro();
 requestAnimationFrame(frame);
