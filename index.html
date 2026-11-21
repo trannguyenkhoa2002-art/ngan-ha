@@ -160,12 +160,12 @@ const BLD={
  store:{n:'Kho chứa',m:100,c:50,t:15,f:1.6,d:'Tăng sức chứa tài nguyên'},
  def:{n:'Pháo phòng thủ',m:150,c:75,t:20,f:1.55,d:'Chống tập kích (+7 công, +70 máu mỗi cấp)'}};
 const SH={
- scout:{n:'Tàu thăm dò',m:50,c:30,f:20,t:8,spd:210,atk:0,hp:8,fr:.03,yd:1,d:'Khám phá bản đồ, lộ diện thế lực'},
- fighter:{n:'Khu trục hạm',m:120,c:60,f:30,t:15,spd:7,atk:10,hp:60,fr:.06,yd:1,cls:'light',d:'Hạng nhẹ — khắc chế Ném bom, yếu trước Hạng nặng'},
- bomber:{n:'Oanh tạc cơ',r:15,m:170,c:100,f:55,t:18,spd:6.5,atk:17,hp:48,fr:.07,yd:2,cls:'bomb',tech:['missile',1],d:'Ném bom — khắc chế Hạng nặng, yếu trước Hạng nhẹ'},
- cruiser:{n:'Tuần dương hạm',r:30,m:420,c:260,f:120,t:42,spd:5.5,atk:42,hp:270,fr:.12,yd:3,cls:'heavy',tech:['weapon',2],d:'Hạng nặng — khắc chế Hạng nhẹ, yếu trước Ném bom'},
- battle:{n:'Chiến hạm',r:150,m:1200,c:800,f:400,t:90,spd:4.5,atk:150,hp:900,fr:.25,yd:5,cls:'heavy',tech:['plasma',1],d:'Hạng nặng — pháo đài bay'},
- colony:{n:'Tàu thực dân',m:240,c:160,f:80,t:30,spd:4,atk:0,hp:40,fr:.1,yd:2,d:'Lập thuộc địa trên hành tinh trống — tiêu hao 1 tàu khi thành công'}};
+ scout:{n:'Tàu thăm dò',m:50,c:30,f:20,rt:6,t:8,spd:210,atk:0,hp:8,fr:.03,yd:1,d:'Khám phá bản đồ, lộ diện thế lực'},
+ fighter:{n:'Khu trục hạm',m:120,c:60,f:30,rt:10,t:15,spd:7,atk:10,hp:60,fr:.06,yd:1,cls:'light',d:'Hạng nhẹ — khắc chế Ném bom, yếu trước Hạng nặng'},
+ bomber:{n:'Oanh tạc cơ',r:15,m:170,c:100,f:55,rt:15,t:18,spd:6.5,atk:17,hp:48,fr:.07,yd:2,cls:'bomb',tech:['missile',1],d:'Ném bom — khắc chế Hạng nặng, yếu trước Hạng nhẹ'},
+ cruiser:{n:'Tuần dương hạm',r:30,m:420,c:260,f:120,rt:20,t:42,spd:5.5,atk:42,hp:270,fr:.12,yd:3,cls:'heavy',tech:['weapon',2],d:'Hạng nặng — khắc chế Hạng nhẹ, yếu trước Ném bom'},
+ battle:{n:'Chiến hạm',r:150,m:1200,c:800,f:400,rt:30,t:90,spd:4.5,atk:150,hp:900,fr:.25,yd:5,cls:'heavy',tech:['plasma',1],d:'Hạng nặng — pháo đài bay'},
+ colony:{n:'Tàu thực dân',m:240,c:160,f:80,rt:6,t:30,spd:4,atk:0,hp:40,fr:.1,yd:2,d:'Lập thuộc địa trên hành tinh trống — tiêu hao 1 tàu khi thành công'}};
 const TECH={
  drive:{n:'Động cơ ion',br:'Hạm đội',d:'+15% tốc độ hạm đội / cấp',m:200,c:300,f:100,t:50},
  warp:{n:'Động cơ cong không gian',br:'Hạm đội',d:'+25% tốc độ, −10% nhiên liệu / cấp',m:500,c:700,f:300,t:90,req:{drive:3},lab:3},
@@ -1847,7 +1847,7 @@ function act(a,A,B,C){
     case'gohome':{focus(SYS(0).x,SYS(0).y);UI.sys=0;UI.pl=0;UI.tab='khu';break}
     case'bld':{if(!p||p.owner!==0||p.bq.length>=queueMax()||slotsUsed(p)>=slotsOf(p)||p.bq.some(q=>q.k===A))break;const dk2={mine:'m',cry:'c',fuel:'f',rare:'r'}[A];if(dk2&&!(p.mult[dk2]>0))break;const eff=p.b[A]+p.bq.filter(q=>q.k===A).length,c=bcost(A,eff);if(!afford(c))break;pay(c);p.bq.push({k:A,end:G.t+c.t,t:c.t,c});break}
     case'bcancel':{if(p&&p.bq.length){const i=A?p.bq.findIndex(q=>q.k===A):p.bq.length-1;if(i>=0){const q=p.bq.splice(i,1)[0];refund(q.c)}}break}
-    case'ship':{const p=C!=null?PL(+C):(UI.pl!=null?PL(UI.pl):null),n=+B,d=SH[A];if(!p||p.owner!==0||p.b.yard<d.yd||(d.tech&&G.tech[d.tech[0]]<d.tech[1]))break;const c=shipCost(A);if(G.res.m<c.m*n||G.res.c<c.c*n||G.res.f<c.f*n||G.res.r<(c.r||0)*n)break;pay(c,n);const per=d.t/(1+.2*p.b.yard)*shipT();let last=p.yq.length?p.yq[p.yq.length-1].end:G.t;for(let i=0;i<n;i++){last+=per;p.yq.push({k:A,end:last,dur:per})}break}
+    case'ship':{const p=C!=null?PL(+C):(UI.pl!=null?PL(UI.pl):null),n=+B,d=SH[A];if(!p||p.owner!==0||p.b.yard<d.yd||(d.tech&&G.tech[d.tech[0]]<d.tech[1]))break;const c=shipCost(A);if(G.res.m<c.m*n||G.res.c<c.c*n||G.res.f<c.f*n||G.res.r<(c.r||0)*n)break;pay(c,n);const per=G.tempo>=30?d.rt*60/G.tempo/(1+.1*(p.b.yard-d.yd))*Math.max(.4,1-fx('shipTime')):d.t/(1+.2*p.b.yard)*shipT();let last=p.yq.length?p.yq[p.yq.length-1].end:G.t;for(let i=0;i<n;i++){last+=per;p.yq.push({k:A,end:last,dur:per})}break}
     case'res':{if(G.rq||!techReqOk(A)||G.tech[A]>=TMAX)break;const c=tcost(A,G.tech[A]);if(!afford(c))break;pay(c);G.rq={k:A,end:G.t+c.t,t:c.t};break}
     case'fleet':openFleet(UI.pl!=null&&PL(UI.pl).owner===0?UI.pl:null,+A,B!=null?+B:null,C);return;
     case'fleetfrom':openFleet(+A,null,null,null);return;
