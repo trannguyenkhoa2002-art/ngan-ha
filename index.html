@@ -350,7 +350,7 @@ const FAC=[
  {n:'Bầy Hư Không',col:'#b6ff3c',aggr:0,grow:0,doc:'mixed',rel0:-100,desc:'Mối đe dọa từ lõi thiên hà'}];
 const CAPN=['','Blackstar Prime','Cloudhaven Prime','Goldspire Prime','Eclipse Prime'];
 const DIFF=[{n:'Dễ',raid:.7,grow:.7,res:1.6},{n:'Thường',raid:1,grow:1,res:1},{n:'Khó',raid:1.4,grow:1.4,res:.7}];
-const BAL={facSystems:10,facReach:560,raidStart:3000,invadeStart:6000,homeSiege:9000,crisisGap:9000,timeMul:1.5,earlyT:1200,fleetSpd:.6,npcGrow:.5,slots:[16,22,28],homeSlots:34,queueMax:3,sprawl:.12,upkeep:.001,capDiv:.12,crisisT:16200,crisisShare:.15,crisisWarn:900,crisisLose:.4};
+const BAL={facSystems:10,facReach:560,raidStart:3000,invadeStart:6000,homeSiege:9000,crisisGap:9000,timeMul:1.5,earlyT:1200,fleetSpd:2.2,npcGrow:.5,slots:[16,22,28],homeSlots:34,queueMax:3,sprawl:.12,upkeep:.001,capDiv:.12,crisisT:16200,crisisShare:.15,crisisWarn:900,crisisLose:.4};
 const STARCOL=['#ffe9a8','#ffb98a','#a8d0ff','#ffffff'];
 
 /* ======================= TẠO THẾ GIỚI ======================= */
@@ -538,7 +538,7 @@ function checkDefeat(){
 }
 function launch(srcP,tsys,tplanet,mission,ships){
   const a=SYS(srcP.sys),b=SYS(tsys),d=dist(a,b),ks=Object.keys(ships).filter(k=>ships[k]>0);
-  const spd=Math.min(...ks.map(k=>SH[k].spd))*spdMul(),dur=Math.max(6,d/spd);
+  const spd=Math.min(...ks.map(k=>SH[k].spd))*spdMul(),dur=Math.max(1.5,d/spd);
   const fuel=Math.ceil(ks.reduce((s,k)=>s+SH[k].fr*ships[k]*Math.max(d,60)/10,0)*fuelMul());
   if(G.res.f<fuel)return false;
   G.res.f-=fuel;ks.forEach(k=>srcP.ships[k]-=ships[k]);
@@ -1751,7 +1751,7 @@ function fmUpdate(){
   const a=SYS(PL(FM.src).sys),b=SYS(FM.ts),d=dist(a,b);let err='',info='';
   if(!tot)err='Hãy chọn ít nhất 1 tàu.';
   else{
-    const ks=Object.keys(ships),spd=Math.min(...ks.map(k=>SH[k].spd))*spdMul(),dur=Math.max(6,d/spd),fuel=Math.ceil(ks.reduce((s,k)=>s+SH[k].fr*ships[k]*Math.max(d,60)/10,0)*fuelMul());
+    const ks=Object.keys(ships),spd=Math.min(...ks.map(k=>SH[k].spd))*spdMul(),dur=Math.max(1.5,d/spd),fuel=Math.ceil(ks.reduce((s,k)=>s+SH[k].fr*ships[k]*Math.max(d,60)/10,0)*fuelMul());
     const fs=fstats(ships);
     info=`Khoảng cách ${Math.round(d)} · Đến nơi sau <b>${fmtT(dur)}</b><br>Nhiên liệu: <span class="${G.res.f>=fuel?'':'bad'}">${ic('f')}${fuel}</span> · Công ${Math.round(fs.atk)} · Máu ${Math.round(fs.hp)}`;
     if(G.res.f<fuel)err='Không đủ nhiên liệu.';
