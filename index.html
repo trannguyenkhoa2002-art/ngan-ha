@@ -20,6 +20,7 @@ select,input[type=number]{background:#0a0d24;border:2px solid var(--line);paddin
 .logo{color:var(--acc);font-weight:bold;letter-spacing:1px}
 .chip{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .ic{display:inline-block;width:10px;height:10px;border:1px solid #000;vertical-align:middle}
+.icl{font-size:10px;font-weight:bold;margin:0 3px 0 2px}.icl.m{color:var(--m)}.icl.c{color:var(--c)}.icl.f{color:var(--f)}.icl.r{color:#e07bff}
 .ic.m{background:var(--m)}.ic.c{background:var(--c)}.ic.f{background:var(--f)}.ic.r{background:#e07bff}
 .dim{color:var(--dim)}.ok{color:var(--ok)}.bad{color:var(--bad)}.acc{color:var(--acc)}
 #ctl{margin-left:auto;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
@@ -114,10 +115,10 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <body>
 <header id="top">
   <div class="logo">★ CHINH PHỤC NGÂN HÀ</div>
-  <div class="chip"><i class="ic m"></i><span id="rm">0</span><span class="dim" id="dm"></span></div>
-  <div class="chip"><i class="ic c"></i><span id="rc">0</span><span class="dim" id="dc"></span></div>
-  <div class="chip"><i class="ic f"></i><span id="rf">0</span><span class="dim" id="df"></span></div>
-  <div class="chip"><i class="ic r"></i><span id="rr">0</span><span class="dim" id="dr"></span></div>
+  <div class="chip"><i class="ic m" title="Kim loại"></i><span class="icl m">KL</span><span id="rm">0</span><span class="dim" id="dm"></span></div>
+  <div class="chip"><i class="ic c" title="Tinh thể"></i><span class="icl c">TT</span><span id="rc">0</span><span class="dim" id="dc"></span></div>
+  <div class="chip"><i class="ic f" title="Nhiên liệu"></i><span class="icl f">NL</span><span id="rf">0</span><span class="dim" id="df"></span></div>
+  <div class="chip"><i class="ic r" title="Kim loại hiếm"></i><span class="icl r">KH</span><span id="rr">0</span><span class="dim" id="dr"></span></div>
   <div class="chip dim" id="dom"></div>
   <div class="chip dim" id="clock"></div>
   <div id="ctl">
@@ -162,11 +163,11 @@ const BLD={
  def:{n:'Pháo phòng thủ',m:150,c:75,t:20,f:1.55,d:'Chống tập kích (+7 công, +70 máu mỗi cấp)'}};
 const SH={
  scout:{n:'Tàu thăm dò',m:50,c:30,f:20,rt:6,t:8,spd:210,atk:0,hp:8,fr:.03,yd:1,d:'Khám phá bản đồ, lộ diện thế lực'},
- fighter:{n:'Khu trục hạm',m:120,c:60,f:30,rt:10,t:15,spd:70,atk:10,hp:60,fr:.06,yd:1,cls:'light',d:'Hạng nhẹ — khắc chế Ném bom, yếu trước Hạng nặng'},
- bomber:{n:'Oanh tạc cơ',r:15,m:170,c:100,f:55,rt:15,t:18,spd:65,atk:17,hp:48,fr:.07,yd:2,cls:'bomb',tech:['missile',1],d:'Ném bom — khắc chế Hạng nặng, yếu trước Hạng nhẹ'},
- cruiser:{n:'Tuần dương hạm',r:30,m:420,c:260,f:120,rt:20,t:42,spd:55,atk:42,hp:270,fr:.12,yd:3,cls:'heavy',tech:['weapon',2],d:'Hạng nặng — khắc chế Hạng nhẹ, yếu trước Ném bom'},
- battle:{n:'Chiến hạm',r:150,m:1200,c:800,f:400,rt:30,t:90,spd:45,atk:150,hp:900,fr:.25,yd:5,cls:'heavy',tech:['plasma',1],d:'Hạng nặng — pháo đài bay'},
- colony:{n:'Tàu thực dân',m:240,c:160,f:80,rt:6,t:30,spd:40,atk:0,hp:40,fr:.1,yd:2,d:'Lập thuộc địa trên hành tinh trống — tiêu hao 1 tàu khi thành công'}};
+ fighter:{n:'Khu trục hạm',m:120,c:60,f:30,rt:10,t:15,spd:160,atk:10,hp:60,fr:.06,yd:1,cls:'light',d:'Hạng nhẹ — khắc chế Ném bom, yếu trước Hạng nặng'},
+ bomber:{n:'Oanh tạc cơ',r:15,m:170,c:100,f:55,rt:15,t:18,spd:140,atk:17,hp:48,fr:.07,yd:2,cls:'bomb',tech:['missile',1],d:'Ném bom — khắc chế Hạng nặng, yếu trước Hạng nhẹ'},
+ cruiser:{n:'Tuần dương hạm',r:30,m:420,c:260,f:120,rt:20,t:42,spd:150,atk:42,hp:270,fr:.12,yd:3,cls:'heavy',tech:['weapon',2],d:'Hạng nặng — khắc chế Hạng nhẹ, yếu trước Ném bom'},
+ battle:{n:'Chiến hạm',r:150,m:1200,c:800,f:400,rt:30,t:90,spd:130,atk:150,hp:900,fr:.25,yd:5,cls:'heavy',tech:['plasma',1],d:'Hạng nặng — pháo đài bay'},
+ colony:{n:'Tàu thực dân',m:240,c:160,f:80,rt:6,t:30,spd:180,atk:0,hp:40,fr:.1,yd:2,d:'Lập thuộc địa trên hành tinh trống — tiêu hao 1 tàu khi thành công'}};
 const TECH={
  drive:{n:'Động cơ ion',br:'Hạm đội',d:'+15% tốc độ hạm đội / cấp',m:200,c:300,f:100,t:50},
  warp:{n:'Động cơ cong không gian',br:'Hạm đội',d:'+25% tốc độ, −10% nhiên liệu / cấp',m:500,c:700,f:300,t:90,req:{drive:3},lab:3},
@@ -1503,7 +1504,8 @@ function hit(mx,my){
 }
 
 /* ======================= GIAO DIỆN ======================= */
-const ic=k=>`<i class="ic ${k}"></i>`;
+const RLAB={m:['KL','Kim loại'],c:['TT','Tinh thể'],f:['NL','Nhiên liệu'],r:['KH','Kim loại hiếm']};
+const ic=k=>`<i class="ic ${k}" title="${RLAB[k][1]}"></i><span class="icl ${k}">${RLAB[k][0]}</span>`;
 const costH=c=>[c.m?`<span class="${G.res.m>=c.m?'':'bad'}">${ic('m')}${fmt(c.m)}</span>`:'',c.c?`<span class="${G.res.c>=c.c?'':'bad'}">${ic('c')}${fmt(c.c)}</span>`:'',c.f?`<span class="${G.res.f>=c.f?'':'bad'}">${ic('f')}${fmt(c.f)}</span>`:'',c.r?`<span class="${G.res.r>=c.r?'':'bad'}">${ic('r')}${fmt(c.r)}</span>`:''].filter(Boolean).join(' ');
 const facTag=o=>o<0?'<span class="tag" style="background:#777">Vô chủ</span>':`<span class="tag" style="background:${FAC[o].col}">${o===0?'Bạn':FAC[o].n}</span>`;
 const knownDp=p=>p.recon&&G.t-p.recon.t<reconT()?p.recon.dp:p.dp*(1+((p.seed%100)/100*.7-.35)*Math.max(.2,1-.2*G.tech.intel));
