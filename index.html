@@ -67,6 +67,7 @@ h4{margin:10px 0 4px;font-size:12px;color:var(--dim);text-transform:uppercase;le
 .hl{outline:3px solid var(--acc);outline-offset:1px;animation:pulse 1s infinite}
 @keyframes pulse{50%{outline-color:#fff;box-shadow:0 0 12px var(--acc)}}
 #sidetoggle{display:none}
+.chipb{padding:2px 6px;font-size:11px;min-height:0}.chipb.on{background:var(--acc);color:#000;border-color:#fff}
 .rgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0}.rc{background:var(--pan2);border:2px solid var(--line);padding:2px;text-align:center;cursor:pointer}
 .rc.unk .rimg{filter:brightness(0);opacity:.45}.rc.sel{border-color:#fff}.rc.mine{border-color:var(--ok)}.rimg{width:100%;image-rendering:pixelated;display:block}.rn{font-size:8.5px;line-height:1.1;height:19px;overflow:hidden}
 .shp{width:48px;height:48px;image-rendering:pixelated;flex:none}.shp.sm{width:30px;height:30px}.shp.xs{width:30px;height:30px}
@@ -856,7 +857,7 @@ function step(dt){
 const TUT=[
  {t:'Nâng cấp Mỏ kim loại',x:'Ở tab Khu vực (hành tinh nhà New Earth), bấm "Nâng cấp" ở Mỏ kim loại để tăng sản lượng.',ok:()=>{const h=PL(0);return h.b.mine>=2||h.bq.some(q=>q.k==='mine')},tab:'khu',sel:'[data-act=bld][data-a=mine]'},
  {t:'Xây Xưởng tàu',x:'Xưởng tàu cho phép đóng tàu thăm dò và tàu chiến. Nâng cấp nó trong danh sách công trình.',ok:()=>{const h=PL(0);return h.b.yard>=1||h.bq.some(q=>q.k==='yard')},tab:'khu',sel:'[data-act=bld][data-a=yard]'},
- {t:'Đóng Tàu thăm dò',x:'Khi Xưởng tàu xong, bấm +1 ở Tàu thăm dò. Tàu này giúp mở rộng bản đồ.',ok:()=>{const h=PL(0);return(h.ships.scout||0)>=2||h.yq.some(q=>q.k==='scout')||G.fleets.length>0},tab:'khu',sel:'[data-act=ship][data-a=scout]'},
+ {t:'Đóng Tàu thăm dò',x:'Khi Xưởng tàu xong, mở tab Hạm đội và bấm +1 ở Tàu thăm dò. Tàu này giúp mở rộng bản đồ.',ok:()=>{const h=PL(0);return(h.ships.scout||0)>=2||h.yq.some(q=>q.k==='scout')||G.fleets.length>0},tab:'hd',sel:'[data-act=ship][data-a=scout]'},
  {t:'Thám hiểm',x:'Bấm vào hệ sao có dấu ? trên bản đồ rồi "Gửi tàu thăm dò". Thế lực chỉ lộ diện khi bạn khám phá lãnh thổ của họ.',ok:()=>G.fleets.some(f=>f.mission==='explore')||G.systems.filter(s=>s.st===2).length>=8,tab:'khu'},
  {t:'Khảo sát hành tinh',x:'Chọn một hành tinh (ví dụ Genesis II) rồi bấm "Gửi tàu khảo sát". Chỉ khi tàu thăm dò tới nơi bạn mới thấy trữ lượng tài nguyên, đặc tính và số ô xây.',ok:()=>G.planets.some(p=>p.surveyed&&p.owner!==0)||G.fleets.some(f=>f.mission==='survey'),tab:'khu'},
  {t:'Nghiên cứu công nghệ',x:'Xây Phòng nghiên cứu, rồi vào tab Nghiên cứu để mở công nghệ mới.',ok:()=>Object.values(G.tech).some(v=>v>0)||!!G.rq,tab:'nc',sel:'[data-act=res]'},
@@ -1506,12 +1507,12 @@ const costH=c=>[c.m?`<span class="${G.res.m>=c.m?'':'bad'}">${ic('m')}${fmt(c.m)
 const facTag=o=>o<0?'<span class="tag" style="background:#777">Vô chủ</span>':`<span class="tag" style="background:${FAC[o].col}">${o===0?'Bạn':FAC[o].n}</span>`;
 const knownDp=p=>p.recon&&G.t-p.recon.t<reconT()?p.recon.dp:p.dp*(1+((p.seed%100)/100*.7-.35)*Math.max(.2,1-.2*G.tech.intel));
 const bandOf=dp=>dp<35?'Yếu':dp<70?'Vừa':dp<130?'Mạnh':'Rất mạnh';
-const TABS=[['khu','Khu vực'],['de','Đế chế'],['nc','Nghiên cứu'],['ct','Chủng tộc'],['tl','Thế lực'],['log','Nhật ký']];
-function renderTabs(){$('#tabs').innerHTML=TABS.map(([k,n])=>`<button data-tab="${k}" class="${UI.tab===k?'on':''}">${n}</button>`).join('')}
+const TABS=[['khu','Khu vực'],['hp','Hành tinh'],['hd','Hạm đội'],['de','Đế chế'],['nc','Nghiên cứu'],['ct','Chủng tộc'],['tl','Thế lực'],['log','Nhật ký']];
+function renderTabs(){$('#tabs').innerHTML=TABS.map(([k,n])=>`<button data-tab="${k}" class="${UI.tab===k?'on':''}">${n}${k==='hd'&&G.raids.length?' ⚠':''}${k==='hp'&&own().some(q=>q.unrest>=50&&garrOf(q)<10)?' ⚠':''}</button>`).join('')}
 function sprImg(p){return`<img class="spr" src="${spriteURL(p.type,p.seed)}">`}
 function renderPanel(){
   renderTabs();const pn=$('#panel'),st=pn.scrollTop;
-  pn.innerHTML=({khu:pKhu,de:pDe,nc:pNc,ct:pCt,tl:pTl,log:pLog})[UI.tab]();pn.scrollTop=st;applyHl();
+  pn.innerHTML=({khu:pKhu,hp:pHp,hd:pHd,de:pDe,nc:pNc,ct:pCt,tl:pTl,log:pLog})[UI.tab]();pn.scrollTop=st;applyHl();
 }
 function pKhu(){
   if(UI.sys===null)return`<h3>Bản đồ ngân hà</h3><p class="dim">Bấm vào một hệ sao trên bản đồ để xem hành tinh.</p><p class="dim">Hệ sao có dấu <b>?</b> chưa được khám phá — hãy phái <b>Tàu thăm dò</b> tới đó để lộ diện hành tinh và các thế lực xung quanh.</p><button class="pri" data-act="gohome">⌂ Về hành tinh nhà</button>`;
@@ -1596,11 +1597,16 @@ function pPlanet(p){
     const l=p.b[k],eff=l+(qn[k]||0),c=bcost(k,eff),full=p.bq.length>=queueMax()||used>=slots,qe=p.bq.find(q=>q.k===k),isQ=!!qe;
     h+=`<div class="card"><div class="row">${bico(k)}<div class="grow"><b>${BLD[k].n}</b> <span class="acc">Cấp ${l}${qn[k]?' (+'+qn[k]+')':''}</span><br><span class="dim">${BLD[k].d}</span></div><button data-act="bld" data-a="${k}" ${full||isQ||!afford(c)?'disabled':''}>Nâng cấp</button></div><div class="dim">${costH(c)} · ${fmtT(c.t)}</div>${isQ?`<div class="bar"><i style="width:${clamp(100*(1-(qe.end-G.t)/qe.t),0,100)}%"></i></div><div class="row"><span class="grow acc">Đang xây… ${fmtT(qe.end-G.t)}</span><button data-act="bcancel" data-a="${k}">Hủy</button></div>`:''}</div>`;
   }
+  h+=`<div class="card"><div class="row"><div class="grow dim">🚀 Xưởng tàu và hạm đội đồn trú nằm ở tab <b>Hạm đội</b>.</div><button data-act="gotab" data-a="hd" data-b="${p.id}">Mở</button></div></div>`;
+  return h;
+}
+function shipyardH(p){
+  let h='';
   if(p.b.yard>0){
     h+=`<h4>Xưởng tàu (cấp ${p.b.yard})</h4>`;
     for(const k in SH){
       const d=SH[k],tl=d.tech&&G.tech[d.tech[0]]<d.tech[1],lock=p.b.yard<d.yd||tl,c=shipCost(k);
-      h+=`<div class="card"><div class="row">${shipImg(k)}<div class="grow"><b>${d.n}</b> <span class="tag" style="background:${SHCOL[k]}">Mk ${ROMN[shipTier(k)]}</span> <span class="dim">· công ${Math.round(fstats({[k]:1}).atk)} máu ${Math.round(fstats({[k]:1}).hp)}</span><br><span class="dim">${d.d}</span>${tierStrip(k)}</div><div><button data-act="ship" data-a="${k}" data-b="1" ${lock||!afford(c)?'disabled':''}>+1</button> <button data-act="ship" data-a="${k}" data-b="5" ${lock||G.res.m<c.m*5||G.res.c<c.c*5||G.res.f<c.f*5||G.res.r<(c.r||0)*5?'disabled':''}>+5</button></div></div><div class="dim">${lock?`<span class="bad">${p.b.yard<d.yd?'Cần Xưởng tàu cấp '+d.yd:'Cần công nghệ: '+TECH[d.tech[0]].n+' cấp '+d.tech[1]}</span>`:costH(c)+' · '+fmtT(d.t/(1+.2*p.b.yard)*shipT())}</div></div>`;
+      h+=`<div class="card"><div class="row">${shipImg(k)}<div class="grow"><b>${d.n}</b> <span class="tag" style="background:${SHCOL[k]}">Mk ${ROMN[shipTier(k)]}</span> <span class="dim">· công ${Math.round(fstats({[k]:1}).atk)} máu ${Math.round(fstats({[k]:1}).hp)}</span><br><span class="dim">${d.d}</span>${tierStrip(k)}</div><div><button data-act="ship" data-a="${k}" data-b="1" data-c="${p.id}" ${lock||!afford(c)?'disabled':''}>+1</button> <button data-act="ship" data-a="${k}" data-b="5" data-c="${p.id}" ${lock||G.res.m<c.m*5||G.res.c<c.c*5||G.res.f<c.f*5||G.res.r<(c.r||0)*5?'disabled':''}>+5</button></div></div><div class="dim">${lock?`<span class="bad">${p.b.yard<d.yd?'Cần Xưởng tàu cấp '+d.yd:'Cần công nghệ: '+TECH[d.tech[0]].n+' cấp '+d.tech[1]}</span>`:costH(c)+' · '+fmtT(d.t/(1+.2*p.b.yard)*shipT())}</div></div>`;
     }
     if(p.yq.length){const cnt={};p.yq.forEach(q=>cnt[q.k]=(cnt[q.k]||0)+1);h+=`<div class="card">Hàng đợi:${Object.entries(cnt).map(([k,n])=>`<div class="row">${shipImg(k,'sm')}<span>${SH[k].n} ×${n}</span></div>`).join('')}<div class="bar"><i style="width:${clamp(100*(1-(p.yq[0].end-G.t)/p.yq[0].dur),0,100)}%"></i></div><span class="dim">Chiếc kế tiếp: ${fmtT(p.yq[0].end-G.t)}</span></div>`}
   }
@@ -1618,11 +1624,52 @@ function polH(){
 }
 function pDe(){
   let h=polH()+`<h3 style="margin-top:10px">Nhiệm vụ</h3>`+QUESTS.map(q=>`<div class="card" style="padding:3px 7px"><span class="${G.quests[q.id]?'ok':''}">${G.quests[q.id]?'✔':'☐'} ${q.n}</span> <span class="dim">${G.quests[q.id]?'':'(+'+fmt(q.r.m)+' KL)'}</span></div>`).join('')+`<h3 style="margin-top:10px">Đế chế (${own().length} hành tinh)</h3>`;
-  own().forEach(p=>{const i=pinfo(p);h+=`<div class="card click" data-act="gopl" data-a="${p.id}"><div class="row">${sprImg(p)}${p.race>=0?`<img class="shp sm" src="${raceURL(p.race)}" title="${RACES[p.race].n}">`:''}<div class="grow"><b>${p.name}</b>${p.home?' ⌂':''}<br><span class="dim">${ic('m')}${rateStr(i.m)} ${ic('c')}${rateStr(i.c)} ${ic('f')}${rateStr(i.f)}</span></div></div>${p.bq.length?`<div class="acc">Đang xây: ${p.bq.map(q=>BLD[q.k].n+' '+fmtT(q.end-G.t)).join(' · ')}</div>`:''}${sh(p.ships)?`<div class="dim">Tàu: ${Object.entries(p.ships).filter(([,n])=>n>0).map(([k,n])=>SH[k].n+' ×'+n).join(', ')}</div>`:''}</div>`});
-  h+=`<h4>Hạm đội đang bay</h4>`;
+  h+=`<div class="card dim">Quản lý từng hành tinh ở tab <b>Hành tinh</b>; xưởng tàu, hạm đội đồn trú và hạm đội đang bay ở tab <b>Hạm đội</b>.</div>`;
+  return h;
+}
+const ATTN={coop:'hợp tác',dep:'lệ thuộc',host:'chống đối'};
+const garrOf=p=>sh(p.ships)-(p.ships.scout||0)-(p.ships.colony||0);
+function pHp(){
+  const ps=own(),r=rates(),f=UI.hpf||'all';
+  const unr=ps.filter(p=>p.unrest>0).length,risk=ps.filter(p=>p.unrest>=50&&garrOf(p)<10).length;
+  let list=ps.slice();
+  if(f==='unrest')list=list.filter(p=>p.unrest>0);else if(f==='race')list=list.filter(p=>p.race>=0&&!p.home);else if(f==='conq')list=list.filter(p=>p.conqT>0&&!p.home);
+  list.sort((a,b)=>(b.unrest||0)-(a.unrest||0)||(a.home?-1:b.home?1:0)||a.name.localeCompare(b.name));
+  const cnt={all:ps.length,unrest:unr,race:ps.filter(p=>p.race>=0&&!p.home).length,conq:ps.filter(p=>p.conqT>0&&!p.home).length};
+  let h=`<h3>Quản lý hành tinh (${ps.length})</h3><div class="card">Sản lượng toàn đế chế: ${ic('m')}${rateStr(r.m)} ${ic('c')}${rateStr(r.c)} ${ic('f')}${rateStr(r.f)} ${ic('r')}${rateStr(r.r)}<br>Tàu chiến đồn trú: <b>${ps.reduce((a,p)=>a+garrOf(p),0)}</b> · Đang bất ổn: <b class="${unr?'bad':''}">${unr}</b>${risk?` · <span class="bad">⚠ ${risk} hành tinh có nguy cơ nổi dậy</span>`:''}</div>`;
+  h+=`<div class="row" style="flex-wrap:wrap;gap:4px">${[['all','Tất cả'],['unrest','Bất ổn'],['race','Có dân bản địa'],['conq','Đã chiếm']].map(([k,n])=>`<button class="chipb ${f===k?'on':''}" data-act="hpf" data-a="${k}">${n} (${cnt[k]})</button>`).join('')}</div>`;
+  if(!list.length)h+='<p class="dim">Không có hành tinh nào khớp bộ lọc.</p>';
+  list.forEach(p=>{
+    const i=pinfo(p),g=garrOf(p),used=slotsUsed(p),sl=slotsOf(p),risky=p.unrest>=50&&g<10,R=p.race>=0?RACES[p.race]:null;
+    const other=own().some(q=>q.id!==p.id&&garrOf(q)>0);
+    h+=`<div class="card" style="${risky?'border-color:var(--bad)':''}"><div class="row">${sprImg(p)}${R?`<img class="shp sm" src="${raceURL(p.race)}" title="${R.n}">`:''}<div class="grow"><b>${p.name}</b>${p.home?' ⌂':''} <span class="dim">${TYPES[p.type].n} · cỡ ${['nhỏ','vừa','lớn'][p.size]}</span><br><span class="dim">${R?R.n+(p.att&&!p.home?' ('+ATTN[p.att]+')':''):p.life?'Có sinh quyển':'Không có sự sống'}${p.trait?' · '+TRAITS[p.trait].n:''}</span></div></div>`;
+    h+=`<div class="dim">${ic('m')}${rateStr(i.m)} ${ic('c')}${rateStr(i.c)} ${ic('f')}${rateStr(i.f)}${p.mult.r>0?' '+ic('r')+rateStr(i.r):''} · Ô xây ${used}/${sl}</div>`;
+    h+=`<div>⚔ Đồn trú <b>${g}</b> · Pháo cấp ${p.b.def} · Xưởng tàu cấp ${p.b.yard}${p.bq.length?` · Đang xây ${p.bq.length}/${queueMax()}`:''}</div>`;
+    if(p.unrest>0)h+=`<div class="bar"><i style="width:${clamp(p.unrest,0,100)}%;background:var(--bad)"></i></div><div class="${risky?'bad':'dim'}">Bất ổn ${Math.round(p.unrest)}% — sản lượng −${Math.round(Math.min(60,p.unrest*.6))}%${risky?' · ⚠ nguy cơ nổi dậy: cần đồn trú tàu chiến hoặc xây pháo':''}</div>`;
+    h+=`<div class="row" style="flex-wrap:wrap;gap:4px;margin-top:4px"><button class="chipb" data-act="gopl" data-a="${p.id}">Xem</button><button class="chipb" data-act="gotab" data-a="hd" data-b="${p.id}">Hạm đội</button>${other?`<button class="chipb" data-act="reinf" data-a="${p.id}">Tăng viện</button>`:''}<button class="chipb" data-act="qb" data-a="${p.id}" data-b="def" ${p.bq.length>=queueMax()||p.bq.some(q=>q.k==='def')||slotsUsed(p)>=sl?'disabled':''}>Xây pháo</button></div></div>`;
+  });
+  return h;
+}
+function pHd(){
+  const ps=own();
+  if(!ps.length)return'<h3>Hạm đội</h3><p class="dim">Bạn không còn hành tinh nào.</p>';
+  const p=(UI.hdp!=null&&PL(UI.hdp).owner===0)?PL(UI.hdp):(ps.find(q=>q.b.yard>0)||ps[0]);
+  const tot={};ps.forEach(q=>{for(const k in q.ships)tot[k]=(tot[k]||0)+q.ships[k]});G.fleets.forEach(f=>{for(const k in f.ships)tot[k]=(tot[k]||0)+f.ships[k]});
+  let h=`<h3>Hạm đội &amp; Xưởng tàu</h3><div class="card">Tổng lực lượng: ${Object.entries(tot).filter(([,n])=>n>0).map(([k,n])=>`${shipImg(k,'sm')}<b>×${n}</b>`).join(' ')||'<span class="dim">chưa có tàu</span>'}</div>`;
+  h+=`<h4>Chọn hành tinh</h4><div class="row" style="flex-wrap:wrap;gap:3px">${ps.map(q=>`<button class="chipb ${q.id===p.id?'on':''}" data-act="hdsel" data-a="${q.id}">${q.name}${q.b.yard?' 🚀'+q.b.yard:''}${garrOf(q)?' ⚔'+garrOf(q):''}</button>`).join('')}</div>`;
+  h+=`<h3 style="margin-top:8px">${p.name}${p.home?' ⌂':''}</h3>`;
+  if(p.b.yard>0)h+=shipyardH(p);
+  else{
+    h+=`<div class="card dim">Hành tinh này chưa có Xưởng tàu — hãy xây ở tab Khu vực.</div>`;
+    const dock=Object.entries(p.ships).filter(([,n])=>n>0);
+    h+=`<h4>Hạm đội đồn trú</h4><div class="card">${dock.length?dock.map(([k,n])=>`<div class="row">${shipImg(k,'sm')}<span>${SH[k].n} <b>×${n}</b></span></div>`).join(''):'<span class="dim">Chưa có tàu.</span>'}</div>`;
+    if(dock.length)h+=`<button class="pri" data-act="fleetfrom" data-a="${p.id}">Điều hạm đội</button>`;
+    h+=`<div style="margin-top:4px"><button data-act="gopl" data-a="${p.id}">Tới hành tinh</button></div>`;
+  }
+  h+=`<h4>Hạm đội đang bay (${G.fleets.length})</h4>`;
   if(!G.fleets.length)h+='<p class="dim">Không có.</p>';
-  G.fleets.forEach(f=>{h+=`<div class="card"><b>${({explore:'Thám hiểm',colonize:'Thực dân',attack:'Tấn công',defend:'Tăng viện',intercept:'Chặn đánh',recon:'Do thám',survey:'Khảo sát',expedition:'Viễn chinh'})[f.mission]}</b> → ${SYS(f.sys).name}${f.tp!=null?' / '+PL(f.tp).name:''} <span class="dim">(${f.phase==='out'?'đang đi':'đang về'}, ${fmtT(f.t1-G.t)})</span><br><span class="dim">${Object.entries(f.ships).map(([k,n])=>SH[k].n+' ×'+n).join(', ')}</span>${f.phase==='out'?` <button data-act="recall" data-a="${f.id}">Triệu hồi</button>`:''}</div>`});
-  if(G.raids.length){h+=`<h4>Cảnh báo</h4>`;G.raids.forEach(r=>{h+=`<div class="card" style="border-color:var(--bad)"><span class="bad">⚠ Địch tập kích ${PL(r.pid).name} sau ${fmtT(r.t-G.t)}</span></div>`})}
+  G.fleets.forEach(f=>{h+=`<div class="card"><b>${MISN[f.mission]||f.mission}</b> → ${SYS(f.sys).name}${f.tp!=null?' / '+PL(f.tp).name:''} <span class="dim">(${f.phase==='out'?'đang đi':'đang về'}, ${fmtT(f.t1-G.t)})</span><br><span class="dim">${Object.entries(f.ships).map(([k,n])=>SH[k].n+' ×'+n).join(', ')}</span>${f.phase==='out'?` <button data-act="recall" data-a="${f.id}">Triệu hồi</button>`:''}</div>`});
+  if(G.raids.length){h+=`<h4>Cảnh báo tập kích</h4>`;G.raids.forEach(r=>{h+=`<div class="card" style="border-color:var(--bad)"><span class="bad">⚠ ${r.rebel?'Nổi dậy':'Địch'} tập kích ${PL(r.pid).name} sau ${fmtT(r.t-G.t)}</span> <button class="chipb" data-act="reinf" data-a="${r.pid}" data-b="intercept">Chặn đánh</button> <button class="chipb" data-act="reinf" data-a="${r.pid}">Tăng viện</button></div>`})}
   return h;
 }
 const depthOf=k=>{const r=TECH[k].req;return r?1+Math.max(...Object.keys(r).map(depthOf)):0};
@@ -1800,7 +1847,7 @@ function act(a,A,B,C){
     case'gohome':{focus(SYS(0).x,SYS(0).y);UI.sys=0;UI.pl=0;UI.tab='khu';break}
     case'bld':{if(!p||p.owner!==0||p.bq.length>=queueMax()||slotsUsed(p)>=slotsOf(p)||p.bq.some(q=>q.k===A))break;const dk2={mine:'m',cry:'c',fuel:'f',rare:'r'}[A];if(dk2&&!(p.mult[dk2]>0))break;const eff=p.b[A]+p.bq.filter(q=>q.k===A).length,c=bcost(A,eff);if(!afford(c))break;pay(c);p.bq.push({k:A,end:G.t+c.t,t:c.t,c});break}
     case'bcancel':{if(p&&p.bq.length){const i=A?p.bq.findIndex(q=>q.k===A):p.bq.length-1;if(i>=0){const q=p.bq.splice(i,1)[0];refund(q.c)}}break}
-    case'ship':{const n=+B,d=SH[A];if(!p||p.b.yard<d.yd||(d.tech&&G.tech[d.tech[0]]<d.tech[1]))break;const c=shipCost(A);if(G.res.m<c.m*n||G.res.c<c.c*n||G.res.f<c.f*n||G.res.r<(c.r||0)*n)break;pay(c,n);const per=d.t/(1+.2*p.b.yard)*shipT();let last=p.yq.length?p.yq[p.yq.length-1].end:G.t;for(let i=0;i<n;i++){last+=per;p.yq.push({k:A,end:last,dur:per})}break}
+    case'ship':{const p=C!=null?PL(+C):(UI.pl!=null?PL(UI.pl):null),n=+B,d=SH[A];if(!p||p.owner!==0||p.b.yard<d.yd||(d.tech&&G.tech[d.tech[0]]<d.tech[1]))break;const c=shipCost(A);if(G.res.m<c.m*n||G.res.c<c.c*n||G.res.f<c.f*n||G.res.r<(c.r||0)*n)break;pay(c,n);const per=d.t/(1+.2*p.b.yard)*shipT();let last=p.yq.length?p.yq[p.yq.length-1].end:G.t;for(let i=0;i<n;i++){last+=per;p.yq.push({k:A,end:last,dur:per})}break}
     case'res':{if(G.rq||!techReqOk(A)||G.tech[A]>=TMAX)break;const c=tcost(A,G.tech[A]);if(!afford(c))break;pay(c);G.rq={k:A,end:G.t+c.t,t:c.t};break}
     case'fleet':openFleet(UI.pl!=null&&PL(UI.pl).owner===0?UI.pl:null,+A,B!=null?+B:null,C);return;
     case'fleetfrom':openFleet(+A,null,null,null);return;
@@ -1809,6 +1856,11 @@ function act(a,A,B,C){
     case'pol':{const k=A;if(pol(k)){G.pol=G.pol.filter(x=>x!==k);G.polCd=G.t+120}else if(G.pol.length<polSlots()&&G.t>=G.polCd){G.pol.push(k);G.polCd=G.t+120;addLog('Chính sách: '+POL[k].n,'info',false)}break}
     case'coop':{const q=PL(+A);if(!q||q.race<0||q.att!=='coop'||q.coop||!q.surveyed||q.owner===0)break;const c=dipCost(.6);if(!afford(c))break;pay(c);setCoop(q);break}
     case'vassal':{const q=PL(+A);if(!q||q.race<0||q.att!=='dep'||q.vassal||!q.surveyed||q.owner!==-1)break;const c=dipCost(.5);if(!afford(c))break;pay(c);q.vassal=true;addLog(`🙇 ${RACES[q.race].n} tại ${q.name} nhận bảo hộ và bắt đầu cống nạp.`,'good');break}
+    case'gotab':UI.tab=A;if(B!=null&&B!=='undefined')UI.hdp=+B;break;
+    case'hdsel':UI.hdp=+A;break;
+    case'hpf':UI.hpf=A;break;
+    case'qb':{const keep=UI.pl;UI.pl=+A;act('bld',B);UI.pl=keep;return}
+    case'reinf':{const q=PL(+A),ms=B==='intercept'?'intercept':'defend';const src=own().filter(x=>x.id!==q.id).map(x=>[x,garrOf(x)]).filter(y=>y[1]>0).sort((a,b)=>b[1]-a[1])[0];if(!src){showToast('Không có hành tinh nào khác có tàu chiến.','warn');return}openFleet(src[0].id,q.sys,q.id,ms);return}
     case'selrace':UI.race=+A;break;
     case'seltech':UI.tech=A;break;
     case'tutskip':G.tutOff=true;tutHtml='';break;
@@ -1921,7 +1973,7 @@ resize();
 if(!load()){newGame(Math.floor(Math.random()*1e9),1,300);UI.sys=0;UI.pl=0}
 else{UI.sys=0;UI.pl=0}
 cam.z=1;focus(SYS(0).x,SYS(0).y);
-window.__NH={routeDist,sameSysPos,orbPos,defEstimate,needS,scheduleRaid,adaptDoc,checkDefeat,RANKS,facDoc,hiveD,isHost,setCoop,assaultNatives,coopSpec,SPEC,ATN,RACES,raceURL,raceAttrs,surveyPlanet,genMult,shipTier,shipURL,shipCanvas,tierMap,SHCOL,fx,fxRefresh,techDesc,TECH,get G(){return G},step,act,UI:()=>UI,launch,fstats,fight,npcDef,pinfo,rates,mulVs,mulOf,techReqOk,cam:()=>cam,fxBurst,fxBattle,fxRing,FX,startCrisis,spawnWave,endCrisis,crisisTick,expedition,reconPlanet,interceptRaid,knownDp,polSlots,POL,shipCost,newGame,BAL,DIFF,fmtT,rateStr,load,save,FACDOC:o=>facDoc(o),SHSPD:k=>SH[k].spd,spdMul};
+window.__NH={garrOf,shipyardH,routeDist,sameSysPos,orbPos,defEstimate,needS,scheduleRaid,adaptDoc,checkDefeat,RANKS,facDoc,hiveD,isHost,setCoop,assaultNatives,coopSpec,SPEC,ATN,RACES,raceURL,raceAttrs,surveyPlanet,genMult,shipTier,shipURL,shipCanvas,tierMap,SHCOL,fx,fxRefresh,techDesc,TECH,get G(){return G},step,act,UI:()=>UI,launch,fstats,fight,npcDef,pinfo,rates,mulVs,mulOf,techReqOk,cam:()=>cam,fxBurst,fxBattle,fxRing,FX,startCrisis,spawnWave,endCrisis,crisisTick,expedition,reconPlanet,interceptRaid,knownDp,polSlots,POL,shipCost,newGame,BAL,DIFF,fmtT,rateStr,load,save,FACDOC:o=>facDoc(o),SHSPD:k=>SH[k].spd,spdMul};
 renderPanel();renderTop();
 if(!G.intro)showIntro();
 requestAnimationFrame(frame);
