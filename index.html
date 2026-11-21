@@ -164,7 +164,7 @@ const SH={
  bomber:{n:'Oanh tạc cơ',r:15,m:170,c:100,f:55,t:18,spd:6.5,atk:17,hp:48,fr:.07,yd:2,cls:'bomb',tech:['missile',1],d:'Ném bom — khắc chế Hạng nặng, yếu trước Hạng nhẹ'},
  cruiser:{n:'Tuần dương hạm',r:30,m:420,c:260,f:120,t:42,spd:5.5,atk:42,hp:270,fr:.12,yd:3,cls:'heavy',tech:['weapon',2],d:'Hạng nặng — khắc chế Hạng nhẹ, yếu trước Ném bom'},
  battle:{n:'Chiến hạm',r:150,m:1200,c:800,f:400,t:90,spd:4.5,atk:150,hp:900,fr:.25,yd:5,cls:'heavy',tech:['plasma',1],d:'Hạng nặng — pháo đài bay'},
- colony:{n:'Tàu thực dân',m:720,c:530,f:380,t:30,spd:4,atk:0,hp:40,fr:.1,yd:2,d:'Lập thuộc địa trên hành tinh trống'}};
+ colony:{n:'Tàu thực dân',m:240,c:160,f:80,t:30,spd:4,atk:0,hp:40,fr:.1,yd:2,d:'Lập thuộc địa trên hành tinh trống — tiêu hao 1 tàu khi thành công'}};
 const TECH={
  drive:{n:'Động cơ ion',br:'Hạm đội',d:'+15% tốc độ hạm đội / cấp',m:200,c:300,f:100,t:50},
  warp:{n:'Động cơ cong không gian',br:'Hạm đội',d:'+25% tốc độ, −10% nhiên liệu / cấp',m:500,c:700,f:300,t:90,req:{drive:3},lab:3},
@@ -350,7 +350,8 @@ const FAC=[
  {n:'Bầy Hư Không',col:'#b6ff3c',aggr:0,grow:0,doc:'mixed',rel0:-100,desc:'Mối đe dọa từ lõi thiên hà'}];
 const CAPN=['','Blackstar Prime','Cloudhaven Prime','Goldspire Prime','Eclipse Prime'];
 const DIFF=[{n:'Dễ',raid:.7,grow:.7,res:1.6},{n:'Thường',raid:1,grow:1,res:1},{n:'Khó',raid:1.4,grow:1.4,res:.7}];
-const BAL={facSystems:10,facReach:560,raidStart:3000,invadeStart:6000,homeSiege:9000,crisisGap:9000,timeMul:1.5,earlyT:1200,fleetSpd:2.2,npcGrow:.5,slots:[16,22,28],homeSlots:34,queueMax:3,sprawl:.12,upkeep:.001,capDiv:.12,crisisT:16200,crisisShare:.15,crisisWarn:900,crisisLose:.4};
+const START_RES={m:1500,c:900,f:500,r:100};
+const BAL={facSystems:10,facReach:560,raidStart:3000,invadeStart:6000,homeSiege:9000,crisisGap:9000,timeMul:1.5,researchTimeMul:.2,researchLevelMul:1.35,colonySurcharge:.2,earlyT:1200,fleetSpd:2.2,npcGrow:.5,slots:[16,22,28],homeSlots:34,queueMax:3,sprawl:.12,upkeep:.001,capDiv:.12,crisisT:16200,crisisShare:.15,crisisWarn:900,crisisLose:.4};
 const STARCOL=['#ffe9a8','#ffb98a','#a8d0ff','#ffffff'];
 
 /* ======================= TẠO THẾ GIỚI ======================= */
@@ -446,7 +447,7 @@ function newGame(seed,diff=1,tempo=1){
     });
   });
   const facs=FAC.map((f,i)=>({id:i,known:i===0,truce:0,rel:FAC[i].rel0||0,ally:false,nextRaid:BAL.raidStart+R()*600,nextExp:150+R()*100}));
-  G={v:13,seed,diff,tempo,rank:0,coalition:false,coopRaces:{},story:{},crisis:{state:0,wave:0,next:0,hive:0},pol:[],polCd:0,lost:false,tut:0,tutOff:false,tutFlag:{},warT:0,scanKey:'',t:0,acc:0,fid:0,captured:0,quests:{},qacc:0,storm:0,nextEv:300,res:{r:Math.round(30*DIFF[diff].res),m:Math.round(450*DIFF[diff].res),c:Math.round(220*DIFF[diff].res),f:Math.round(110*DIFF[diff].res)},tech:Object.fromEntries(Object.keys(TECH).map(k=>[k,0])),rq:null,
+  G={v:13,researchPace:1,starterResources:1,seed,diff,tempo,rank:0,coalition:false,coopRaces:{},story:{},crisis:{state:0,wave:0,next:0,hive:0},pol:[],polCd:0,lost:false,tut:0,tutOff:false,tutFlag:{},warT:0,scanKey:'',t:0,acc:0,fid:0,captured:0,quests:{},qacc:0,storm:0,nextEv:300,res:Object.fromEntries(Object.entries(START_RES).map(([k,n])=>[k,Math.round(n*DIFF[diff].res)])),tech:Object.fromEntries(Object.keys(TECH).map(k=>[k,0])),rq:null,
      systems,planets,facs,fleets:[],raids:[],reveals:[],log:[],won:false,intro:false};
   hp.ships={scout:1};fxRefresh();
   reveal(systems[0].x,systems[0].y,240,true);
@@ -461,7 +462,7 @@ const labLv=()=>Math.max(0,...own().map(p=>p.b.lab));
 const slotsOf=p=>(p.home?BAL.homeSlots:BAL.slots[p.size])+(p.trait==='fertile'?4:p.trait==='harsh'?-4:0)+2*G.tech.terra+Math.round(fx('slots'))+(p.owner===0&&p.race>=0?(RACES[p.race].pm.slots||0):0);
 const slotsUsed=p=>Object.values(p.b).reduce((a,n)=>a+n,0)+p.bq.length;
 const bcost=(k,l)=>{const d=BLD[k];return{m:Math.round(d.m*Math.pow(d.f,l)),c:Math.round(d.c*Math.pow(d.f,l)),f:0,r:(['yard','lab','def'].includes(k)&&l>=3)?Math.round(8*Math.pow(1.5,l-3)):0,t:(G.tempo>=30&&l<2)?(l===0?300:600)/G.tempo:d.t*Math.pow(1.35,l)*BAL.timeMul*tf()*Math.max(.35,1-.05*G.tech.automation-fx('buildTime'))}};
-const tcost=(k,l)=>{const d=TECH[k],q=Math.pow(1.9,l)*(pol('sci')?.9:1)*Math.max(.5,1-.08*G.tech.quantum-fx('resCost'));return{m:Math.round(d.m*q),c:Math.round(d.c*q),f:Math.round(d.f*q),r:d.lab>=3?Math.round(d.c*.06*(d.lab-2)*q):0,t:d.t*Math.pow(1.5,l)/(1+.1*labLv())*(pol('sci')?.75:1)*Math.max(.25,1-.08*G.tech.netlab-fx('resTime')-coopSpec(d.br))*BAL.timeMul*tf()}};
+const tcost=(k,l)=>{const d=TECH[k],q=Math.pow(1.9,l)*(pol('sci')?.9:1)*Math.max(.5,1-.08*G.tech.quantum-fx('resCost'));return{m:Math.round(d.m*q),c:Math.round(d.c*q),f:Math.round(d.f*q),r:d.lab>=3?Math.round(d.c*.06*(d.lab-2)*q):0,t:d.t*Math.pow(BAL.researchLevelMul,l)/(1+.1*labLv())*(pol('sci')?.75:1)*Math.max(.25,1-.08*G.tech.netlab-fx('resTime')-coopSpec(d.br))*BAL.timeMul*BAL.researchTimeMul*tf()}};
 const queueMax=()=>BAL.queueMax+Math.min(3,Math.round(fx('queue')));
 const reconT=()=>900*(1+fx('reconTime'));
 const early=()=>G?clamp(1-G.t/BAL.earlyT,0,1):0;
@@ -469,7 +470,7 @@ const tf=()=>1-.65*early();
 const shipT=()=>tf()*Math.max(.4,1-fx('shipTime'));
 const pol=k=>G.pol.includes(k);
 const polSlots=()=>{const n=own().length;return(G.t>=1200||n>=2?1:0)+(n>=6||G.captured>0?1:0)+(n>=12?1:0)};
-const shipCost=k=>{const d=SH[k],q=(k==='colony'?(1+.4*(own().length-1))*(pol('expand')?.75:1)*Math.max(.5,1-fx('colonyCost')):1)*Math.max(.5,1-fx('shipCost'));return{m:Math.round(d.m*q),c:Math.round(d.c*q),f:Math.round(d.f*q),r:Math.round((d.r||0)*q)}};
+const shipCost=k=>{const d=SH[k],q=(k==='colony'?(1+BAL.colonySurcharge*(own().length-1))*(pol('expand')?.75:1)*Math.max(.5,1-fx('colonyCost')):1)*Math.max(.5,1-fx('shipCost'));return{m:Math.round(d.m*q),c:Math.round(d.c*q),f:Math.round(d.f*q),r:Math.round((d.r||0)*q)}};
 const spdMul=()=>(1+.15*G.tech.drive+.25*G.tech.warp+fx('spd'))*BAL.fleetSpd;
 const fuelMul=()=>Math.max(.3,1-.1*G.tech.warp-.08*G.tech.cargo-fx('fuelUse'));
 const rmf=(p,k)=>(p.owner===0&&p.race>=0)?(RACES[p.race].pm[k]||1):1;
@@ -926,11 +927,28 @@ function report(tp,win,res,loot,fo){
 }
 
 /* ======================= LƯU / TẢI ======================= */
+function upgradeResearchPace(){
+  if(G.researchPace===1)return;
+  if(G.rq){
+    const q=G.rq,oldTotal=q.t||Math.max(0,q.end-G.t),remaining=oldTotal>0?clamp((q.end-G.t)/oldTotal,0,1):0;
+    q.t=Math.min(oldTotal,tcost(q.k,G.tech[q.k]||0).t);q.end=G.t+q.t*remaining;
+  }
+  G.researchPace=1;
+}
+function upgradeStarterResources(){
+  if(G.starterResources===1)return;
+  if(!G.lost&&G.t<BAL.earlyT){
+    const old={m:450,c:220,f:110,r:30},mul=DIFF[G.diff].res,cap=totalCap();
+    for(const k in START_RES){const bonus=Math.round(START_RES[k]*mul)-Math.round(old[k]*mul);G.res[k]+=Math.min(bonus,Math.max(0,cap-G.res[k]))}
+    addLog('Tiếp tế tân thủ: đã bổ sung phần tài nguyên khởi đầu được tăng thêm.','good');
+  }
+  G.starterResources=1;
+}
 function save(msg){try{localStorage.setItem(SAVE,JSON.stringify({ts:Date.now(),G}));if(msg)showToast('Đã lưu game.','good')}catch(e){}}
 function load(){
   try{
     const s=JSON.parse(localStorage.getItem(SAVE));if(!s||!s.G||s.G.v!==13)return false;
-    G=s.G;fxRefresh();
+    G=s.G;fxRefresh();upgradeResearchPace();
     const tp=G.tempo||1,real=clamp((Date.now()-s.ts)/1000,0,14*86400),el=real/tp;
     if(real>20){
       const dt=Math.max(5,el/5000);quiet=true;catchup=true;
@@ -940,6 +958,7 @@ function load(){
       if(G.crisis.state===2)G.crisis.next=Math.max(G.crisis.next,G.t+300);
       addLog(`Chào mừng trở lại! Bạn vắng mặt ${fmtT(el)}. Đế chế vẫn sản xuất và xây dựng; các thế lực địch và Bầy Hư Không không tấn công khi bạn vắng mặt.${['m','c','f','r'].some(k=>G.res[k]>=totalCap()-1)?' ⚠ Kho đã đầy trong lúc bạn vắng — hãy nâng Kho chứa.':''}`,'info');
     }
+    upgradeStarterResources();
     return true;
   }catch(e){return false}
 }
