@@ -67,6 +67,7 @@ h4{margin:10px 0 4px;font-size:12px;color:var(--dim);text-transform:uppercase;le
 .hl{outline:3px solid var(--acc);outline-offset:1px;animation:pulse 1s infinite}
 @keyframes pulse{50%{outline-color:#fff;box-shadow:0 0 12px var(--acc)}}
 #sidetoggle{display:none}
+.techsticky{position:sticky;top:0;z-index:5;background:var(--pan2);box-shadow:0 4px 8px rgba(0,0,0,.6)}
 .chipb{padding:2px 6px;font-size:11px;min-height:0}.chipb.on{background:var(--acc);color:#000;border-color:#fff}
 .rgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0}.rc{background:var(--pan2);border:2px solid var(--line);padding:2px;text-align:center;cursor:pointer}
 .rc.unk .rimg{filter:brightness(0);opacity:.45}.rc.sel{border-color:#fff}.rc.mine{border-color:var(--ok)}.rimg{width:100%;image-rendering:pixelated;display:block}.rn{font-size:8.5px;line-height:1.1;height:19px;overflow:hidden}
@@ -1684,7 +1685,7 @@ function pNc(){
   {
     const d=TECH[sel],l=G.tech[sel],c=tcost(sel,l),ok=techReqOk(sel),max=l>=TMAX;
     const reqs=Object.entries(d.req||{}).map(([r,lv])=>`<span class="${G.tech[r]>=lv?'ok':'bad'}">${G.tech[r]>=lv?'✔':'✘'} ${TECH[r].n} ${lv}</span>`).join(' · ')+(d.lab>1?` · <span class="${lab>=d.lab?'ok':'bad'}">${lab>=d.lab?'✔':'✘'} Phòng NC cấp ${d.lab}</span>`:'');
-    h+=`<div class="card sel"><div class="row">${techImg(sel,'big')}<div class="grow"><b>${d.n}</b> <span class="tag" style="background:${BRCOL[d.br]}">${d.br}</span><br><span class="acc">Cấp ${l}/${TMAX}</span><br><span class="dim">${techDesc(sel)}</span></div></div>${reqs?`<div style="margin-top:4px">Yêu cầu: ${reqs}</div>`:''}<div class="row" style="margin-top:4px"><span class="grow dim">${max?'Đã tối đa':costH(c)+' · '+fmtT(c.t)}</span><button class="pri" data-act="res" data-a="${sel}" ${G.rq||!ok||max||!afford(c)?'disabled':''}>${max?'Tối đa':'Nghiên cứu'}</button></div></div>`;
+    h+=`<div class="card sel techsticky"><div class="row">${techImg(sel,'big')}<div class="grow"><b>${d.n}</b> <span class="tag" style="background:${BRCOL[d.br]}">${d.br}</span><br><span class="acc">Cấp ${l}/${TMAX}</span><br><span class="dim">${techDesc(sel)}</span></div></div>${reqs?`<div style="margin-top:4px">Yêu cầu: ${reqs}</div>`:''}<div class="row" style="margin-top:4px"><span class="grow dim">${max?'Đã tối đa':costH(c)+' · '+fmtT(c.t)}</span><button class="pri" data-act="res" data-a="${sel}" ${G.rq||!ok||max||!afford(c)?'disabled':''}>${max?'Tối đa':'Nghiên cứu'}</button></div></div>`;
   }
   const TW=58,TH=76,GX=14,GY=8;
   BRORDER.forEach(br=>{
