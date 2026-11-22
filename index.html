@@ -1458,6 +1458,11 @@ function draw(){
       ctx.drawImage(planetSprite(p.type,p.seed),px-sz/2|0,py-sz/2|0,sz,sz);
       const oc=p.owner>=0?FAC[p.owner].col:null;
       if(oc){ctx.fillStyle=oc;ctx.fillRect(px-sz/2-2|0,py+sz/2+1|0,sz+4,2)}
+      if(p.owner===0){ // sóng cùng màu phe người chơi
+        ctx.lineWidth=2;ctx.strokeStyle=oc;
+        for(let w=0;w<2;w++){const ph=(ANIM*.45+w*.5+(p.seed%10)/10)%1;ctx.globalAlpha=.7*(1-ph);ctx.beginPath();ctx.arc(px,py,sz*.7+ph*sz*1.3,0,7);ctx.stroke()}
+        ctx.globalAlpha=1;
+      }
       if(p.owner===0&&p.home){ctx.fillStyle='#fff';ctx.fillRect(px|0,py-sz/2-4|0,2,2)}
     });
     if(sel||hov){const rad=Math.round(orb+14),c=sel?'#ffda92':'#b8e6ff',l=9;
@@ -1789,7 +1794,12 @@ const sysList=()=>G.systems.filter(s=>s.st>=1).sort((a,b)=>dist(a,SYS(0))-dist(b
 function openFleet(srcId,tsys,tp,mission){
   const srcs=own().filter(p=>sh(p.ships)>0);
   if(!srcs.length){showToast('Chưa có tàu nào đồn trú. Hãy xây Xưởng tàu và đóng tàu.','warn');return}
-  FM={src:srcId!=null&&srcs.some(p=>p.id===srcId)?srcId:srcs[0].id,ts:tsys!=null?tsys:null,tp:tp??null,ms:mission||null,n:{}};
+  let best=srcId!=null&&srcs.some(p=>p.id===srcId)?srcId:null;
+  if(best===null){const pref=UI.hdp!=null?srcs.find(p=>p.id===UI.hdp):null;
+    if(pref&&tsys==null)best=pref.id;
+    else if(tsys!=null){best=srcs.slice().sort((x,y)=>dist(SYS(x.sys),SYS(tsys))-dist(SYS(y.sys),SYS(tsys)))[0].id}
+    else best=(srcs.find(p=>!p.home)||srcs[0]).id}
+  FM={src:best,ts:tsys!=null?tsys:null,tp:tp??null,ms:mission||null,n:{}};
   if(FM.ts===null)FM.ts=sysList().find(s=>s.id!==PL(FM.src).sys)?.id??0;
   renderFM();
 }
@@ -1799,7 +1809,7 @@ function renderFM(){
   if(FM.tp!=null&&!tps.some(p=>p.id===FM.tp))FM.tp=null;
   modal.hidden=false;
   modal.innerHTML=`<div class="box"><h3>Điều hạm đội</h3>
-  <label>Xuất phát từ<select id="fm-src">${srcs.map(p=>`<option value="${p.id}" ${p.id===FM.src?'selected':''}>${p.name}</option>`).join('')}</select></label>
+  <label>Xuất phát từ<select id="fm-src">${srcs.map(p=>`<option value="${p.id}" ${p.id===FM.src?'selected':''}>${p.name}${p.home?' ⌂':''} (${sh(p.ships)} tàu)</option>`).join('')}</select></label>
   <div>${Object.entries(src.ships).filter(([,n])=>n>0).map(([k,n])=>`<div class="row">${shipImg(k,'sm')}<span class="grow">${SH[k].n} <span class="dim">(có ${n})</span></span><input type="number" min="0" max="${n}" value="${FM.n[k]||0}" data-k="${k}" style="width:70px"></div>`).join('')}</div>
   <label>Hệ sao đích<select id="fm-ts">${sysList().map(s=>`<option value="${s.id}" ${s.id===FM.ts?'selected':''}>${s.st===2?s.name:'? Hệ chưa biết ('+Math.round(dist(s,SYS(0)))+')'} — cách ${Math.round(dist(s,SYS(src.sys)))}</option>`).join('')}</select></label>
   <label>Hành tinh đích<select id="fm-tp"><option value="">— Cả hệ sao —</option>${tps.map(p=>`<option value="${p.id}" ${p.id===FM.tp?'selected':''}>${p.name} (${p.owner<0?'vô chủ':p.owner===0?'của bạn':FAC[p.owner].n})</option>`).join('')}</select></label>
@@ -1852,7 +1862,7 @@ function act(a,A,B,C){
     case'bcancel':{if(p&&p.bq.length){const i=A?p.bq.findIndex(q=>q.k===A):p.bq.length-1;if(i>=0){const q=p.bq.splice(i,1)[0];refund(q.c)}}break}
     case'ship':{const p=C!=null?PL(+C):(UI.pl!=null?PL(UI.pl):null),n=+B,d=SH[A];if(!p||p.owner!==0||p.b.yard<d.yd||(d.tech&&G.tech[d.tech[0]]<d.tech[1]))break;const c=shipCost(A);if(G.res.m<c.m*n||G.res.c<c.c*n||G.res.f<c.f*n||G.res.r<(c.r||0)*n)break;pay(c,n);const per=G.tempo>=30?d.rt*60/G.tempo/(1+.1*(p.b.yard-d.yd))*Math.max(.4,1-fx('shipTime')):d.t/(1+.2*p.b.yard)*shipT();let last=p.yq.length?p.yq[p.yq.length-1].end:G.t;for(let i=0;i<n;i++){last+=per;p.yq.push({k:A,end:last,dur:per})}break}
     case'res':{if(G.rq||!techReqOk(A)||G.tech[A]>=TMAX)break;const c=tcost(A,G.tech[A]);if(!afford(c))break;pay(c);G.rq={k:A,end:G.t+c.t,t:c.t};break}
-    case'fleet':openFleet(UI.pl!=null&&PL(UI.pl).owner===0?UI.pl:null,+A,B!=null?+B:null,C);return;
+    case'fleet':openFleet(null,+A,B!=null?+B:null,C);return;
     case'fleetfrom':openFleet(+A,null,null,null);return;
     case'closeintro':G.intro=true;closeModal();return;
     case'closemodal':closeModal();return;
