@@ -549,6 +549,16 @@ function launch(srcP,tsys,tplanet,mission,ships){
   G.fleets.push({id:++G.fid,src:srcP.id,sys:tsys,tp:tplanet,mission,ships:Object.fromEntries(ks.map(k=>[k,ships[k]])),t0:G.t,t1:G.t+dur,dur,phase:'out'});
   return true;
 }
+function launchPark(pf,tsys,tplanet,mission,ships){
+  const fo=parkOrb(pf),sp={sys:pf.sys,_orb:fo},d=routeDist(sp,tsys,tplanet,G.fid+1),ks=Object.keys(ships).filter(k=>ships[k]>0);
+  const spd=Math.min(...ks.map(k=>SH[k].spd))*spdMul(),dur=Math.max(.5,d/spd);
+  const fuel=Math.ceil(ks.reduce((s,k)=>s+SH[k].fr*ships[k]*Math.max(d,60)/10,0)*fuelMul());
+  if(G.res.f<fuel)return false;
+  G.res.f-=fuel;ks.forEach(k=>{pf.ships[k]-=ships[k];if(!pf.ships[k])delete pf.ships[k]});
+  if(!sh(pf.ships))G.fleets=G.fleets.filter(x=>x!==pf);
+  G.fleets.push({id:++G.fid,src:pf.src,fs:pf.sys,ftp:pf.tp,fo,sys:tsys,tp:tplanet,mission,ships:Object.fromEntries(ks.map(k=>[k,ships[k]])),t0:G.t,t1:G.t+dur,dur,phase:'out'});
+  return true;
+}
 function fleetArrive(f){
   const s=SYS(f.sys),tp=f.tp!=null?PL(f.tp):null;
   let found=0;
@@ -584,6 +594,8 @@ function fleetArrive(f){
     }else addLog('Mục tiêu tấn công không còn là kẻ thù.','info');
   }
   if(!sh(f.ships)){G.fleets=G.fleets.filter(x=>x!==f);return}
+  if(['explore','survey','expedition','recon'].includes(f.mission)&&!(tp&&tp.owner===0)&&Object.keys(f.ships).every(k=>k==='scout')){
+    f.phase='park';f.t1=1e15;f.mission='explore';addLog(`Tàu thăm dò đậu lại ${tp?tp.name:s.name} — có thể điều tiếp từ đây (tab Hạm đội).`,'info',false);return}
   if(tp&&tp.owner===0){ // đích là hành tinh của mình (kể cả vừa chiếm/thực dân): tàu ở lại đóng quân
     for(const k in f.ships)tp.ships[k]=(tp.ships[k]||0)+f.ships[k];
     addLog(`Hạm đội đã đóng quân tại ${tp.name}.`,'info',false);G.fleets=G.fleets.filter(x=>x!==f);return}
@@ -852,7 +864,7 @@ function step(dt){
     while(p.yq.length&&G.t>=p.yq[0].end){const q=p.yq.shift();p.ships[q.k]=(p.ships[q.k]||0)+1;if(!p.yq.some(x=>x.k===q.k))addLog(`${SH[q.k].n} đã sẵn sàng tại ${p.name}.`,'info',false)}
   });
   if(G.rq&&G.t>=G.rq.end){const tb0=tierMap();G.tech[G.rq.k]++;fxRefresh();{const tb1=tierMap();for(const sk in tb1)if(tb1[sk]>tb0[sk])addLog(`🛠 ${SH[sk].n} nâng lên Mk ${ROMN[tb1[sk]]} — thiết kế tàu mới!`,'good')}addLog(`Nghiên cứu xong: ${TECH[G.rq.k].n} cấp ${G.tech[G.rq.k]}.`,'good');G.rq=null}
-  G.fleets.slice().forEach(f=>{if(G.t>=f.t1)f.phase==='out'?fleetArrive(f):fleetHome(f)});
+  G.fleets.slice().forEach(f=>{if(f.phase!=='park'&&G.t>=f.t1)f.phase==='out'?fleetArrive(f):fleetHome(f)});
   if(!catchup)G.raids=G.raids.filter(x=>{if(G.t>=x.t){resolveRaid(x);return false}return true});
   if(G.t>=G.nextEv){G.nextEv=G.t+480+Math.random()*360;if(!catchup)randomEvent()}
   G.qacc+=dt*(G.tempo||1);if(G.qacc>=1){G.qacc=0;checkQuests()}
@@ -1370,13 +1382,18 @@ const s2w=(x,y)=>{const rx=(x-cv.width/2)/cam.z+cam.x,ry=(y-cv.height/2)/cam.z+c
 function resize(){const r=cv.parentElement.getBoundingClientRect();cv.width=Math.max(200,r.width|0);cv.height=Math.max(200,r.height|0)}
 const sysOwner=s=>{const c={};s.pl.forEach(i=>{const o=PL(i).owner;if(o>=0)c[o]=(c[o]||0)+1});let b=-1,bn=0;for(const o in c)if(c[o]>bn){bn=c[o];b=+o}return b};
 function fleetPos(f){
-  const a=SYS(PL(f.src).sys),b=SYS(f.sys),t=clamp((G.t-f.t0)/(f.t1-f.t0),0,1),u=f.phase==='out'?t:(f.u0??1)*(1-t);
-  return{x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,ang:Math.atan2((b.y-a.y)*(f.phase==='out'?1:-1),(b.x-a.x)*(f.phase==='out'?1:-1)),a,b};
+  const a=SYS(fOrig(f).sys),b=SYS(f.sys),t=ftT(f),o=f.phase!=='back',u=o?t:(f.u0??1)*(1-t);
+  return{x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,ang:Math.atan2((b.y-a.y)*(o?1:-1),(b.x-a.x)*(o?1:-1)),a,b};
 }
+const fOrig=f=>f.fs!=null?{sys:f.fs,orb:f.ftp!=null?orbPos(PL(f.ftp)):(f.fo||[0,0])}:{sys:PL(f.src).sys,orb:orbPos(PL(f.src))};
+const parkOrb=f=>f.tp!=null?orbPos(PL(f.tp)):(fOrig(f).sys===f.sys?[Math.cos(f.id*1.7)*85,Math.sin(f.id*1.7)*85]:[0,0]);
+const ftT=f=>f.phase==='park'?1:clamp((G.t-f.t0)/Math.max(1e-6,f.t1-f.t0),0,1);
+const parked=()=>G.fleets.filter(f=>f.phase==='park');
+const SRC=id=>{if(id<100000)return PL(id);const f=G.fleets.find(x=>x.id===id-100000);return f?{id,pf:f,name:'Đậu tại '+(f.tp!=null?PL(f.tp).name:SYS(f.sys).name),sys:f.sys,ships:f.ships,_orb:parkOrb(f)}:null};
 const orbPos=p=>{const s0=SYS(p.sys),i=Math.max(0,s0.pl.indexOf(p.id)),a=(p.seed%628)/100+ANIM*.25/(1+i*.6),r=22+i*13;return[Math.cos(a)*r,Math.sin(a)*r]};
 // quãng đường thật: từ vị trí tàu rời hành tinh xuất phát (trên quỹ đạo) tới hành tinh đích
 function routeDist(sp,tsys,tp,fid){
-  const a=SYS(sp.sys),b=SYS(tsys),oa=orbPos(sp),ob=tp!=null?orbPos(PL(tp)):(sp.sys===tsys?[Math.cos(fid*1.7)*85,Math.sin(fid*1.7)*85]:[0,0]);
+  const a=SYS(sp.sys),b=SYS(tsys),oa=sp._orb||orbPos(sp),ob=tp!=null?orbPos(PL(tp)):(sp.sys===tsys?[Math.cos(fid*1.7)*85,Math.sin(fid*1.7)*85]:[0,0]);
   const A=rotp(a.x,a.y),B=rotp(b.x,b.y);
   return Math.hypot(B[0]+ob[0]-A[0]-oa[0],B[1]+ob[1]-A[1]-oa[1]);
 }
@@ -1390,10 +1407,10 @@ function sameSysPos(f){
 const MISN={explore:'Thám hiểm',colonize:'Thực dân hóa',attack:'Tấn công',defend:'Tăng viện',intercept:'Chặn đánh',recon:'Do thám',survey:'Khảo sát',expedition:'Viễn chinh'};
 const missCol=f=>f.mission==='attack'||f.mission==='intercept'?'#ff6b6b':f.mission==='colonize'?'#5be08a':f.mission==='defend'?'#ffd24d':'#4fe3ff';
 function fleetScreen(f){
-  const sp=PL(f.src),a=SYS(sp.sys),b=SYS(f.sys),tp=f.tp!=null?PL(f.tp):null;
-  const oa=orbPos(sp),ob=tp?orbPos(tp):(sp.sys===f.sys?[Math.cos(f.id*1.7)*85,Math.sin(f.id*1.7)*85]:[0,0]);
+  const O=fOrig(f),a=SYS(O.sys),b=SYS(f.sys),tp=f.tp!=null?PL(f.tp):null;
+  const oa=O.orb,ob=parkOrb(f);
   const[ax,ay]=w2s(a.x,a.y),[bx,by]=w2s(b.x,b.y),S=[ax+oa[0]*cam.z,ay+oa[1]*cam.z],T=[bx+ob[0]*cam.z,by+ob[1]*cam.z];
-  const t=clamp((G.t-f.t0)/Math.max(1e-6,f.t1-f.t0),0,1),out=f.phase==='out',u=out?t:(f.u0??1)*(1-t);
+  const t=ftT(f),out=f.phase!=='back',u=out?t:(f.u0??1)*(1-t);
   const P=[S[0]+(T[0]-S[0])*u,S[1]+(T[1]-S[1])*u],D=out?T:S;
   let ang=Math.atan2(D[1]-P[1],D[0]-P[0]);if(Math.hypot(D[0]-P[0],D[1]-P[1])<2)ang=Math.atan2(T[1]-S[1],T[0]-S[0])+(out?0:Math.PI);
   return{S,T,P,D,ang,u,out,tp};
@@ -1442,7 +1459,7 @@ function draw(){
   });
   for(const o in cen){if(!G.facs[o].known)continue;const c=cen[o],[x,y]=w2s(c.x/c.n,c.y/c.n-46);ctx.font=`bold ${clamp(13*cam.z,10,20)|0}px "Courier New"`;ctx.textAlign='center';ctx.globalAlpha=.8;ctx.fillStyle=FAC[o].col;ctx.fillText(FAC[o].n.toUpperCase(),x,y);ctx.globalAlpha=1}
   // đường bay
-  G.fleets.forEach(f=>drawRoute(f));
+  G.fleets.forEach(f=>{if(f.phase!=='park')drawRoute(f)});
   // hệ sao
   ctx.textAlign='center';
   G.systems.forEach(s=>{
@@ -1479,9 +1496,9 @@ function draw(){
   G.fleets.forEach(f=>{
     const q=fleetScreen(f),[x,y]=q.P;ctx.save();ctx.translate(x|0,y|0);ctx.rotate(q.ang);
     const fk=flagOf(f.ships)||'scout',sz=Math.max(16,Math.round(24*cam.z*.9)),mc=missCol(f);
-    engineFlame(sz,mc,f.id||f.t0);
+    if(f.phase!=='park')engineFlame(sz,mc,f.id||f.t0);
     ctx.drawImage(shipCanvas(fk,shipTier(fk),SHCOL[fk]),-sz/2,-sz/2,sz,sz);ctx.restore();
-    drawFleetLabel(f,q,x,y,sz,mc);
+    if(f.phase!=='park')drawFleetLabel(f,q,x,y,sz,mc);
   });
   G.raids.forEach(r=>{
     const a=SYS(r.o),b=SYS(PL(r.pid).sys),u=clamp((G.t-r.t0)/Math.max(1,r.t-r.t0),0,1),[sx0,sy0]=w2s(a.x+(b.x-a.x)*u,a.y+(b.y-a.y)*u),[sx,sy]=a===b?(()=>{const op=orbPos(PL(r.pid)),k2=(1-u)*45;return[sx0+(op[0]+Math.cos(r.t0)*k2)*cam.z,sy0+(op[1]+Math.sin(r.t0)*k2)*cam.z]})():[sx0,sy0],[ax,ay]=w2s(a.x,a.y),[bx,by]=w2s(b.x,b.y);
@@ -1677,9 +1694,11 @@ function pHd(){
     if(dock.length)h+=`<button class="pri" data-act="fleetfrom" data-a="${p.id}">Điều hạm đội</button>`;
     h+=`<div style="margin-top:4px"><button data-act="gopl" data-a="${p.id}">Tới hành tinh</button></div>`;
   }
-  h+=`<h4>Hạm đội đang bay (${G.fleets.length})</h4>`;
-  if(!G.fleets.length)h+='<p class="dim">Không có.</p>';
-  G.fleets.forEach(f=>{h+=`<div class="card"><b>${MISN[f.mission]||f.mission}</b> → ${SYS(f.sys).name}${f.tp!=null?' / '+PL(f.tp).name:''} <span class="dim">(${f.phase==='out'?'đang đi':'đang về'}, ${fmtT(f.t1-G.t)})</span><br><span class="dim">${Object.entries(f.ships).map(([k,n])=>SH[k].n+' ×'+n).join(', ')}</span>${f.phase==='out'?` <button data-act="recall" data-a="${f.id}">Triệu hồi</button>`:''}</div>`});
+  const pk=parked(),fl=G.fleets.filter(f=>f.phase!=='park');
+  if(pk.length){h+=`<h4>Tàu thăm dò đang đậu (${pk.length})</h4>`;pk.forEach(f=>{h+=`<div class="card"><b>📍 ${f.tp!=null?PL(f.tp).name+' · ':''}${SYS(f.sys).name}</b><br><span class="dim">${Object.entries(f.ships).map(([k,n])=>SH[k].n+' ×'+n).join(', ')}</span><div class="row" style="gap:4px;margin-top:3px"><button class="chipb" data-act="pfgo" data-a="${f.id}">Điều tiếp từ đây</button><button class="chipb" data-act="pfhome" data-a="${f.id}">Về nhà</button></div></div>`})}
+  h+=`<h4>Hạm đội đang bay (${fl.length})</h4>`;
+  if(!fl.length)h+='<p class="dim">Không có.</p>';
+  fl.forEach(f=>{h+=`<div class="card"><b>${MISN[f.mission]||f.mission}</b> → ${SYS(f.sys).name}${f.tp!=null?' / '+PL(f.tp).name:''} <span class="dim">(${f.phase==='out'?'đang đi':'đang về'}, ${fmtT(f.t1-G.t)})</span><br><span class="dim">${Object.entries(f.ships).map(([k,n])=>SH[k].n+' ×'+n).join(', ')}</span>${f.phase==='out'?` <button data-act="recall" data-a="${f.id}">Triệu hồi</button>`:''}</div>`});
   if(G.raids.length){h+=`<h4>Cảnh báo tập kích</h4>`;G.raids.forEach(r=>{h+=`<div class="card" style="border-color:var(--bad)"><span class="bad">⚠ ${r.rebel?'Nổi dậy':'Địch'} tập kích ${PL(r.pid).name} sau ${fmtT(r.t-G.t)}</span> <button class="chipb" data-act="reinf" data-a="${r.pid}" data-b="intercept">Chặn đánh</button> <button class="chipb" data-act="reinf" data-a="${r.pid}">Tăng viện</button></div>`})}
   return h;
 }
@@ -1795,24 +1814,24 @@ function showVictory(why){
 }
 const sysList=()=>G.systems.filter(s=>s.st>=1).sort((a,b)=>dist(a,SYS(0))-dist(b,SYS(0)));
 function openFleet(srcId,tsys,tp,mission){
-  const srcs=own().filter(p=>sh(p.ships)>0);
+  const srcs=own().filter(p=>sh(p.ships)>0).concat(parked().map(f=>SRC(100000+f.id)));
   if(!srcs.length){showToast('Chưa có tàu nào đồn trú. Hãy xây Xưởng tàu và đóng tàu.','warn');return}
   let best=srcId!=null&&srcs.some(p=>p.id===srcId)?srcId:null;
   if(best===null){const pref=UI.hdp!=null?srcs.find(p=>p.id===UI.hdp):null;
     if(pref&&tsys==null)best=pref.id;
     else if(tsys!=null){best=srcs.slice().sort((x,y)=>dist(SYS(x.sys),SYS(tsys))-dist(SYS(y.sys),SYS(tsys)))[0].id}
-    else best=(srcs.find(p=>!p.home)||srcs[0]).id}
+    else best=(srcs.find(p=>!p.home&&!p.pf)||srcs[0]).id}
   FM={src:best,ts:tsys!=null?tsys:null,tp:tp??null,ms:mission||null,n:{}};
-  if(FM.ts===null)FM.ts=sysList().find(s=>s.id!==PL(FM.src).sys)?.id??0;
+  if(FM.ts===null)FM.ts=sysList().find(s=>s.id!==SRC(FM.src).sys)?.id??0;
   renderFM();
 }
 function renderFM(){
-  const srcs=own().filter(p=>sh(p.ships)>0),src=PL(FM.src),ts=SYS(FM.ts);
+  const srcs=own().filter(p=>sh(p.ships)>0).concat(parked().map(f=>SRC(100000+f.id))),src=SRC(FM.src),ts=SYS(FM.ts);
   const tps=ts.st===2?ts.pl.map(i=>PL(i)):[];
   if(FM.tp!=null&&!tps.some(p=>p.id===FM.tp))FM.tp=null;
   modal.hidden=false;
   modal.innerHTML=`<div class="box"><h3>Điều hạm đội</h3>
-  <label>Xuất phát từ<select id="fm-src">${srcs.map(p=>`<option value="${p.id}" ${p.id===FM.src?'selected':''}>${p.name}${p.home?' ⌂':''} (${sh(p.ships)} tàu)</option>`).join('')}</select></label>
+  <label>Xuất phát từ<select id="fm-src">${srcs.map(p=>`<option value="${p.id}" ${p.id===FM.src?'selected':''}>${p.name}${p.home?' ⌂':''} (${sh(p.ships)} tàu)${p.pf?' — đang đậu':''}</option>`).join('')}</select></label>
   <div>${Object.entries(src.ships).filter(([,n])=>n>0).map(([k,n])=>`<div class="row">${shipImg(k,'sm')}<span class="grow">${SH[k].n} <span class="dim">(có ${n})</span></span><input type="number" min="0" max="${n}" value="${FM.n[k]||0}" data-k="${k}" style="width:70px"></div>`).join('')}</div>
   <label>Hệ sao đích<select id="fm-ts">${sysList().map(s=>`<option value="${s.id}" ${s.id===FM.ts?'selected':''}>${s.st===2?s.name:'? Hệ chưa biết ('+Math.round(dist(s,SYS(0)))+')'} — cách ${Math.round(dist(s,SYS(src.sys)))}</option>`).join('')}</select></label>
   <label>Hành tinh đích<select id="fm-tp"><option value="">— Cả hệ sao —</option>${tps.map(p=>`<option value="${p.id}" ${p.id===FM.tp?'selected':''}>${p.name} (${p.owner<0?'vô chủ':p.owner===0?'của bạn':FAC[p.owner].n})</option>`).join('')}</select></label>
@@ -1835,8 +1854,8 @@ function fmMissions(){
 function fmUpdate(){
   const ms=fmMissions();if(!ms.some(m=>m[0]===FM.ms))FM.ms=(ms.find(m=>m[0]==='intercept')||ms.find(m=>m[0]==='survey')||ms.find(m=>m[0]==='colonize')||ms.find(m=>m[0]==='attack')||ms.find(m=>m[0]==='defend')||ms.find(m=>m[0]==='expedition')||ms[0])[0];
   $('#fm-ms').innerHTML=ms.map(m=>`<option value="${m[0]}" ${m[0]===FM.ms?'selected':''}>${m[1]}</option>`).join('');
-  const ships={};let tot=0;for(const k in FM.n){const v=clamp(Math.floor(+FM.n[k]||0),0,PL(FM.src).ships[k]||0);if(v>0){ships[k]=v;tot+=v}}
-  const a=SYS(PL(FM.src).sys),b=SYS(FM.ts),d=routeDist(PL(FM.src),FM.ts,FM.tp,G.fid+1);let err='',info='';
+  const ships={};let tot=0;for(const k in FM.n){const v=clamp(Math.floor(+FM.n[k]||0),0,SRC(FM.src).ships[k]||0);if(v>0){ships[k]=v;tot+=v}}
+  const a=SYS(SRC(FM.src).sys),b=SYS(FM.ts),d=routeDist(SRC(FM.src),FM.ts,FM.tp,G.fid+1);let err='',info='';
   if(!tot)err='Hãy chọn ít nhất 1 tàu.';
   else{
     const ks=Object.keys(ships),spd=Math.min(...ks.map(k=>SH[k].spd))*spdMul(),dur=Math.max(.5,d/spd),fuel=Math.ceil(ks.reduce((s,k)=>s+SH[k].fr*ships[k]*Math.max(d,60)/10,0)*fuelMul());
@@ -1873,6 +1892,8 @@ function act(a,A,B,C){
     case'coop':{const q=PL(+A);if(!q||q.race<0||q.att!=='coop'||q.coop||!q.surveyed||q.owner===0)break;const c=dipCost(.6);if(!afford(c))break;pay(c);setCoop(q);break}
     case'vassal':{const q=PL(+A);if(!q||q.race<0||q.att!=='dep'||q.vassal||!q.surveyed||q.owner!==-1)break;const c=dipCost(.5);if(!afford(c))break;pay(c);q.vassal=true;addLog(`🙇 ${RACES[q.race].n} tại ${q.name} nhận bảo hộ và bắt đầu cống nạp.`,'good');break}
     case'gotab':UI.tab=A;if(B!=null&&B!=='undefined')UI.hdp=+B;break;
+    case'pfgo':openFleet(100000+ +A,null,null,null);return;
+    case'pfhome':{const f=G.fleets.find(x=>x.id===+A);if(!f)break;const a=SYS(f.sys),q=own().sort((x,y)=>dist(SYS(x.sys),a)-dist(SYS(y.sys),a))[0];if(q&&launchPark(f,q.sys,q.id,'defend',{...f.ships})){showToast('Tàu thăm dò đang bay về '+q.name,'info')}else showToast('Không đủ nhiên liệu.','warn');break}
     case'hdsel':UI.hdp=+A;break;
     case'hpf':UI.hpf=A;break;
     case'qb':{const keep=UI.pl;UI.pl=+A;act('bld',B);UI.pl=keep;return}
@@ -1921,7 +1942,7 @@ modal.addEventListener('click',e=>{
   if(e.target.id==='fm-x')closeModal();
   if(e.target.id==='fm-go'){
     fmUpdate();
-    if(launch(PL(FM.src),FM.ts,FM.tp,FM.ms,FM._ships)){SFX.launch();showToast('Hạm đội xuất kích!','info');closeModal();UI.tab='de';renderPanel()}
+    if((SRC(FM.src).pf?launchPark(SRC(FM.src).pf,FM.ts,FM.tp,FM.ms,FM._ships):launch(PL(FM.src),FM.ts,FM.tp,FM.ms,FM._ships))){SFX.launch();showToast('Hạm đội xuất kích!','info');closeModal();UI.tab='de';renderPanel()}
   }
 });
 document.addEventListener('pointerdown',()=>pressed=true);
