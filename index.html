@@ -122,7 +122,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   <div class="chip dim" id="dom"></div>
   <div class="chip dim" id="clock"></div>
   <div id="ctl">
-    <button data-spd="0">⏸</button><button data-spd="1">x1</button><button data-spd="2" class="devonly">x2</button><button data-spd="5" class="devonly">x5</button><button data-spd="30" class="devonly">x30</button><button data-spd="120" class="devonly">x120</button>
+    <button data-spd="0">⏸</button><button data-spd="1">x1</button><button data-spd="2" class="devonly">x2</button><button data-spd="5">x5</button><button data-spd="10">x10</button><button data-spd="30" class="devonly">x30</button><button data-spd="120" class="devonly">x120</button>
     <button data-act="help">?</button><button data-act="music" id="music">♪</button><button data-act="mute" id="mute">🔊</button><button data-act="save">Lưu</button><button data-act="new">Chơi lại</button>
   </div>
 </header>
@@ -2028,7 +2028,7 @@ document.addEventListener('keydown',e=>{
   if(!modal.hidden||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;
   const k=e.key.toLowerCase();
   if(k===' '){e.preventDefault();paused=!paused}
-  else if(k==='1'){paused=false;speed=1}else if(k==='2'&&document.body.classList.contains('dev')){paused=false;speed=2}else if(k==='3'&&document.body.classList.contains('dev')){paused=false;speed=5}
+  else if(k==='1'){paused=false;speed=1}else if(k==='2'&&document.body.classList.contains('dev')){paused=false;speed=2}else if(k==='3'){paused=false;speed=5}else if(k==='4'){paused=false;speed=10}
   else if(k==='h')act('gohome');else if(k==='m')act('mute');
   renderTop();
 });
