@@ -230,6 +230,7 @@ addTech('robotics','Rô-bốt xây dựng','Kinh tế',900,800,250,110,{automati
 addTech('megacity','Siêu đô thị','Kinh tế',1600,1400,500,160,{habitat:2},6,{prodAll:.08},'city');
 addTech('elevator','Thang không gian','Kinh tế',1100,1000,350,130,{robotics:2},5,{colonyCost:.06},'rocket');
 // Ngoại giao
+addTech('tradepact','Hiệp ước thương mại','Ngoại giao',500,500,150,90,{diplo:2},2,{dealFee:.02,hauler:.15},'hands');
 addTech('envoy','Sứ giả','Ngoại giao',300,350,90,65,{diplo:1},2,{gift:4},'hands');
 addTech('treaty','Hiệp ước dài hạn','Ngoại giao',450,500,120,80,{diplo:2},3,{truceLen:.20},'book');
 addTech('embassy','Đại sứ quán','Ngoại giao',700,750,200,100,{propaganda:1},3,{relBase:5},'city');
@@ -328,7 +329,7 @@ function fxRefresh(){
 }
 const fx=key=>FXC[key]||0;
 const pc=v=>Math.round(v*1000)/10;
-const FXD={spd:v=>`+${pc(v)}% tốc độ hạm đội`,fuelUse:v=>`−${pc(v)}% nhiên liệu`,buildTime:v=>`−${pc(v)}% thời gian xây dựng`,shipTime:v=>`−${pc(v)}% thời gian đóng tàu`,shipCost:v=>`−${pc(v)}% giá tàu`,colonyCost:v=>`−${pc(v)}% giá tàu thực dân`,turret:v=>`+${pc(v)}% sức pháo phòng thủ`,raidRes:v=>`−${pc(v)}% sức mạnh các đợt tập kích`,storage:v=>`+${pc(v)}% sức chứa kho`,slots:v=>`+${v} ô xây mọi hành tinh`,queue:v=>`+${v} hạng mục xây đồng thời mỗi hành tinh`,scanR:v=>`+${pc(v)}% tầm thám hiểm`,expo:v=>`+${pc(v)}% thưởng viễn chinh`,expoSafe:v=>`−${pc(v)}% rủi ro mất hạm đội viễn chinh`,loot:v=>`+${pc(v)}% chiến lợi phẩm`,reconSafe:v=>`−${pc(v)}% tàu do thám bị mất`,reconTime:v=>`+${pc(v)}% thời gian hiệu lực do thám`,gift:v=>`+${v} quan hệ khi tặng quà`,truceLen:v=>`+${pc(v)}% thời gian hiệp ước`,dipCost:v=>`−${pc(v)}% chi phí ngoại giao`,relBase:v=>`+${v} quan hệ nền với mọi thế lực`,peace:v=>`+${pc(v)}% thời gian giữa các đợt tập kích`,sanction:v=>`−${pc(v)}% tốc độ phát triển của địch`,tribute:v=>`cống nạp tài nguyên từ mỗi thế lực thân thiện`,resTime:v=>`−${pc(v)}% thời gian nghiên cứu`,resCost:v=>`−${pc(v)}% chi phí nghiên cứu`,prodM:v=>`+${pc(v)}% kim loại`,prodC:v=>`+${pc(v)}% tinh thể`,prodF:v=>`+${pc(v)}% nhiên liệu`,prodAll:v=>`+${pc(v)}% mọi sản lượng`,energy:v=>`+${pc(v)}% điện`,energyUse:v=>`−${pc(v)}% điện tiêu thụ`,atk_light:v=>`+${pc(v)}% sát thương Hạng nhẹ`,atk_bomb:v=>`+${pc(v)}% sát thương Ném bom`,atk_heavy:v=>`+${pc(v)}% sát thương Hạng nặng`,hp_light:v=>`+${pc(v)}% máu Hạng nhẹ`,hp_bomb:v=>`+${pc(v)}% máu Ném bom`,hp_heavy:v=>`+${pc(v)}% máu Hạng nặng`,atkAll:v=>`+${pc(v)}% sát thương mọi tàu`,hpAll:v=>`+${pc(v)}% máu mọi tàu`,tactics:v=>`+${pc(v)}% hiệu quả khắc chế`};
+const FXD={dealFee:v=>`−${pc(v)}% phí giao dịch thương mại`,hauler:v=>`+${pc(v)}% sức chở hàng của tàu`,spd:v=>`+${pc(v)}% tốc độ hạm đội`,fuelUse:v=>`−${pc(v)}% nhiên liệu`,buildTime:v=>`−${pc(v)}% thời gian xây dựng`,shipTime:v=>`−${pc(v)}% thời gian đóng tàu`,shipCost:v=>`−${pc(v)}% giá tàu`,colonyCost:v=>`−${pc(v)}% giá tàu thực dân`,turret:v=>`+${pc(v)}% sức pháo phòng thủ`,raidRes:v=>`−${pc(v)}% sức mạnh các đợt tập kích`,storage:v=>`+${pc(v)}% sức chứa kho`,slots:v=>`+${v} ô xây mọi hành tinh`,queue:v=>`+${v} hạng mục xây đồng thời mỗi hành tinh`,scanR:v=>`+${pc(v)}% tầm thám hiểm`,expo:v=>`+${pc(v)}% thưởng viễn chinh`,expoSafe:v=>`−${pc(v)}% rủi ro mất hạm đội viễn chinh`,loot:v=>`+${pc(v)}% chiến lợi phẩm`,reconSafe:v=>`−${pc(v)}% tàu do thám bị mất`,reconTime:v=>`+${pc(v)}% thời gian hiệu lực do thám`,gift:v=>`+${v} quan hệ khi tặng quà`,truceLen:v=>`+${pc(v)}% thời gian hiệp ước`,dipCost:v=>`−${pc(v)}% chi phí ngoại giao`,relBase:v=>`+${v} quan hệ nền với mọi thế lực`,peace:v=>`+${pc(v)}% thời gian giữa các đợt tập kích`,sanction:v=>`−${pc(v)}% tốc độ phát triển của địch`,tribute:v=>`cống nạp tài nguyên từ mỗi thế lực thân thiện`,resTime:v=>`−${pc(v)}% thời gian nghiên cứu`,resCost:v=>`−${pc(v)}% chi phí nghiên cứu`,prodM:v=>`+${pc(v)}% kim loại`,prodC:v=>`+${pc(v)}% tinh thể`,prodF:v=>`+${pc(v)}% nhiên liệu`,prodAll:v=>`+${pc(v)}% mọi sản lượng`,energy:v=>`+${pc(v)}% điện`,energyUse:v=>`−${pc(v)}% điện tiêu thụ`,atk_light:v=>`+${pc(v)}% sát thương Hạng nhẹ`,atk_bomb:v=>`+${pc(v)}% sát thương Ném bom`,atk_heavy:v=>`+${pc(v)}% sát thương Hạng nặng`,hp_light:v=>`+${pc(v)}% máu Hạng nhẹ`,hp_bomb:v=>`+${pc(v)}% máu Ném bom`,hp_heavy:v=>`+${pc(v)}% máu Hạng nặng`,atkAll:v=>`+${pc(v)}% sát thương mọi tàu`,hpAll:v=>`+${pc(v)}% máu mọi tàu`,tactics:v=>`+${pc(v)}% hiệu quả khắc chế`};
 const techDesc=k=>TECH[k].d||(Object.entries(TECH[k].fx||{}).map(([e,v])=>(FXD[e]||(()=>e))(v)).join(', ')+' / cấp');
 const POL={
  mil:{n:'Quân phiệt',d:'+10% sát thương hạm đội; −8% sản lượng'},
@@ -552,6 +553,10 @@ function launch(srcP,tsys,tplanet,mission,ships){
 function fleetArrive(f){
   const s=SYS(f.sys),tp=f.tp!=null?PL(f.tp):null;
   let found=0;
+  if(f.mission==='trade'&&f.deal&&!f.deal.cancel&&!f.deal.done){const D=f.deal,mk=mkOf(D.fac),F=G.facs[D.fac];
+    if(tp&&tp.owner===D.fac&&F.rel>-60){mk.s[D.g]=Math.min(TRT[D.g]*2.5,mk.s[D.g]+D.a);f.cargo={[D.t]:D.b};F.rel=Math.min(100,F.rel+Math.min(6,1+D.a/400));F.tv=(F.tv||0)+D.a;addLog(`Giao thương với ${FAC[D.fac].n} thành công: đã giao ${D.a} ${RLAB[D.g][0]}, đang mang về ${D.b} ${RLAB[D.t][0]}.`,'good')}
+    else{f.cargo={[D.g]:D.a};mk.s[D.t]+=D.b;addLog(`Giao thương với ${FAC[D.fac].n} thất bại — hàng được mang về.`,'warn')}
+    f.deal.done=true}
   if(f.mission==='explore'){if(!quiet)fxRing(s.x,s.y,'#4fe3ff');found=reveal(s.x,s.y,170*(1+.2*G.tech.sensor+fx('scanR')));addLog(`Thám hiểm ${s.name} xong: khám phá thêm ${found} hệ sao.`,found?'good':'info')}
   else reveal(s.x,s.y,90);
   if(f.mission==='defend'){const q=tp;if(q&&q.owner===0){for(const k in f.ships)q.ships[k]=(q.ships[k]||0)+f.ships[k];addLog(`Hạm đội đã đóng quân tại ${q.name}.`,'info',false);G.fleets=G.fleets.filter(x=>x!==f);return}}
@@ -659,6 +664,8 @@ function fleetHome(f){
   let p=PL(f.src);
   if(p.owner!==0){const a=SYS(p.sys);p=own().sort((x,y)=>dist(SYS(x.sys),a)-dist(SYS(y.sys),a))[0]}
   G.fleets=G.fleets.filter(x=>x!==f);
+  if(f.cargo)for(const k in f.cargo)G.res[k]+=f.cargo[k];
+  if(f.deal&&f.deal.cancel&&!f.deal.done){G.res[f.deal.g]+=f.deal.a;mkOf(f.deal.fac).s[f.deal.t]+=f.deal.b}
   if(!p)return;
   for(const k in f.ships)p.ships[k]=(p.ships[k]||0)+f.ships[k];
   addLog('Hạm đội trở về '+p.name+'.','info',false);
@@ -1387,8 +1394,8 @@ function sameSysPos(f){
   let ang=Math.atan2(T[1]-y,T[0]-x);if(Math.hypot(T[0]-x,T[1]-y)<2)ang=Math.atan2(B[1]-A[1],B[0]-A[0])+(out?0:Math.PI);
   return{x,y,ang};
 }
-const MISN={explore:'Thám hiểm',colonize:'Thực dân hóa',attack:'Tấn công',defend:'Tăng viện',intercept:'Chặn đánh',recon:'Do thám',survey:'Khảo sát',expedition:'Viễn chinh'};
-const missCol=f=>f.mission==='attack'||f.mission==='intercept'?'#ff6b6b':f.mission==='colonize'?'#5be08a':f.mission==='defend'?'#ffd24d':'#4fe3ff';
+const MISN={trade:'Giao thương',explore:'Thám hiểm',colonize:'Thực dân hóa',attack:'Tấn công',defend:'Tăng viện',intercept:'Chặn đánh',recon:'Do thám',survey:'Khảo sát',expedition:'Viễn chinh'};
+const missCol=f=>f.mission==='trade'?'#ffb84d':f.mission==='attack'||f.mission==='intercept'?'#ff6b6b':f.mission==='colonize'?'#5be08a':f.mission==='defend'?'#ffd24d':'#4fe3ff';
 function fleetScreen(f){
   const sp=PL(f.src),a=SYS(sp.sys),b=SYS(f.sys),tp=f.tp!=null?PL(f.tp):null;
   const oa=orbPos(sp),ob=tp?orbPos(tp):(sp.sys===f.sys?[Math.cos(f.id*1.7)*85,Math.sin(f.id*1.7)*85]:[0,0]);
@@ -1518,12 +1525,12 @@ const costH=c=>[c.m?`<span class="${G.res.m>=c.m?'':'bad'}">${ic('m')}${fmt(c.m)
 const facTag=o=>o<0?'<span class="tag" style="background:#777">Vô chủ</span>':`<span class="tag" style="background:${FAC[o].col}">${o===0?'Bạn':FAC[o].n}</span>`;
 const knownDp=p=>p.recon&&G.t-p.recon.t<reconT()?p.recon.dp:p.dp*(1+((p.seed%100)/100*.7-.35)*Math.max(.2,1-.2*G.tech.intel));
 const bandOf=dp=>dp<35?'Yếu':dp<70?'Vừa':dp<130?'Mạnh':'Rất mạnh';
-const TABS=[['khu','Khu vực'],['hp','Hành tinh'],['hd','Hạm đội'],['de','Đế chế'],['nc','Nghiên cứu'],['ct','Chủng tộc'],['tl','Thế lực'],['log','Nhật ký']];
+const TABS=[['khu','Khu vực'],['hp','Hành tinh'],['hd','Hạm đội'],['de','Đế chế'],['nc','Nghiên cứu'],['ct','Chủng tộc'],['tm','Thương mại'],['tl','Thế lực'],['log','Nhật ký']];
 function renderTabs(){$('#tabs').innerHTML=TABS.map(([k,n])=>`<button data-tab="${k}" class="${UI.tab===k?'on':''}">${n}${k==='hd'&&G.raids.length?' ⚠':''}${k==='hp'&&own().some(q=>q.unrest>=50&&garrOf(q)<10)?' ⚠':''}</button>`).join('')}
 function sprImg(p){return`<img class="spr" src="${spriteURL(p.type,p.seed)}">`}
 function renderPanel(){
   renderTabs();const pn=$('#panel'),st=pn.scrollTop;
-  pn.innerHTML=({khu:pKhu,hp:pHp,hd:pHd,de:pDe,nc:pNc,ct:pCt,tl:pTl,log:pLog})[UI.tab]();pn.scrollTop=st;applyHl();
+  pn.innerHTML=({khu:pKhu,hp:pHp,hd:pHd,de:pDe,nc:pNc,ct:pCt,tm:pTm,tl:pTl,log:pLog})[UI.tab]();pn.scrollTop=st;applyHl();
 }
 function pKhu(){
   if(UI.sys===null)return`<h3>Bản đồ ngân hà</h3><p class="dim">Bấm vào một hệ sao trên bản đồ để xem hành tinh.</p><p class="dim">Hệ sao có dấu <b>?</b> chưa được khám phá — hãy phái <b>Tàu thăm dò</b> tới đó để lộ diện hành tinh và các thế lực xung quanh.</p><button class="pri" data-act="gohome">⌂ Về hành tinh nhà</button>`;
@@ -1740,6 +1747,57 @@ function dipH(i){
   h+=`<div class="row"><button data-act="ally" data-a="${i}" ${F.rel>=60&&afford(c3)?'':'disabled'}>Liên minh</button><span class="dim">${F.rel>=60?costH(c3):'cần quan hệ ≥ 60'}</span></div>`;
   return h;
 }
+/* ======================= THƯƠNG MẠI ======================= */
+const TRV={m:1,c:1.5,f:1.8,r:6},TRT={m:1500,c:1000,f:700,r:150},TRB={1:{m:1.3,c:1,f:1.2,r:1.1},2:{m:1,c:1,f:1,r:1},3:{m:1,c:1.3,f:1,r:1.2},4:{m:.9,c:.9,f:1.3,r:1.4}};
+const CARGO={scout:120,fighter:90,bomber:140,cruiser:300,battle:520},COUR=['scout','fighter','bomber','cruiser','battle'],RKEYS=['m','c','f','r'];
+function mkOf(i){const F=G.facs[i];if(!F.mk)F.mk={t:G.t,s:Object.fromEntries(RKEYS.map(k=>[k,TRT[k]*.8]))};
+  const dt=G.t-F.mk.t;if(dt>0){const a=1-Math.exp(-.0025*dt);RKEYS.forEach(k=>{F.mk.s[k]+=(TRT[k]-F.mk.s[k])*a});F.mk.t=G.t}return F.mk}
+const tmD=(i,k)=>{const mk=mkOf(i);return clamp(TRB[i][k]*(1+.18*Math.sin(G.t/700+i*1.9+RKEYS.indexOf(k)*1.3))*(1+(1-mk.s[k]/TRT[k])*.5),.5,2.2)};
+const tmSpread=i=>clamp(.14-G.facs[i].rel/1000-.015*G.tech.diplo-fx('dealFee')-(i===2?.03:0),.03,.2);
+const tmRate=(i,g,t)=>{const sp=tmSpread(i);return(TRV[g]*tmD(i,g)*(1-sp))/(TRV[t]*tmD(i,t)*(1+sp))};
+const tmOk=i=>i>0&&i<5&&G.facs[i].known&&G.facs[i].rel>-30&&G.planets.some(p=>p.owner===i&&SYS(p.sys).st===2);
+const tmCap=ships=>COUR.reduce((c,k)=>c+(ships[k]||0)*CARGO[k],0)*(1+fx('hauler'));
+function tmPick(src,need){const pick={},mult=1+fx('hauler');let c=0;for(const k of COUR){const n=src.ships[k]||0;if(!n)continue;const use=Math.min(n,Math.ceil((need-c)/(CARGO[k]*mult)));if(use>0){pick[k]=use;c+=use*CARGO[k]*mult}if(c>=need)break}return c>=need?pick:null}
+function tmPlan(){
+  const fl=[1,2,3,4].filter(tmOk);if(!fl.length)return null;
+  const T=UI.tm=UI.tm||{};if(!fl.includes(T.f))T.f=fl[0];T.g=T.g||'m';if(!T.t||T.t===T.g)T.t=T.g==='c'?'m':'c';T.a=T.a||250;
+  const i=T.f,mk=mkOf(i),fp=G.planets.filter(p=>p.owner===i&&SYS(p.sys).st===2);
+  const srcs=own().filter(p=>COUR.some(k=>(p.ships[k]||0)>0));
+  const nd=p=>Math.min(...fp.map(q=>dist(SYS(p.sys),SYS(q.sys))));
+  const src=srcs.find(p=>p.id===T.s)||srcs.slice().sort((a,b)=>nd(a)-nd(b))[0]||null;
+  const P={fl,T,i,mk,srcs,src,g:T.g,t:T.t,a:Math.max(1,Math.floor(T.a)),err:''};
+  P.rate=tmRate(i,P.g,P.t);P.back=Math.floor(P.a*P.rate);
+  if(!src){P.err='Chưa có tàu nào ở hành tinh của bạn để chở hàng (tàu thăm dò cũng được).';return P}
+  P.tp=fp.slice().sort((a,b)=>dist(SYS(a.sys),SYS(src.sys))-dist(SYS(b.sys),SYS(src.sys)))[0];
+  const need=Math.max(P.a,P.back);P.need=need;P.pick=tmPick(src,need);
+  P.d=routeDist(src,P.tp.sys,P.tp.id,G.fid+1);
+  const ks=P.pick?Object.keys(P.pick):COUR.filter(k=>src.ships[k]);
+  const spd=Math.min(...ks.map(k=>SH[k].spd))*spdMul();P.dur=Math.max(.5,P.d/spd);
+  P.fuel=Math.ceil(ks.reduce((q,k)=>q+SH[k].fr*(P.pick?P.pick[k]:1)*Math.max(P.d,60)/10,0)*fuelMul());
+  if(G.res[P.g]<P.a)P.err='Không đủ nguyên liệu để gửi.';
+  else if(P.back<1)P.err='Số lượng quá nhỏ.';
+  else if(P.back>mk.s[P.t]*.6)P.err='Họ không đủ hàng để đổi (tối đa ≈ '+Math.floor(mk.s[P.t]*.6)+').';
+  else if(!P.pick)P.err='Không đủ sức chở: cần '+Math.ceil(need)+', hành tinh này chở được '+Math.floor(tmCap(src.ships))+'.';
+  else if(G.res.f<P.fuel)P.err='Không đủ nhiên liệu cho chuyến đi.';
+  return P;
+}
+function pTm(){
+  let h=`<h3>Thương mại liên sao</h3><p class="dim">Trao đổi 4 nguyên liệu với các nền văn minh đã gặp. Hàng được chở bằng chính tàu của bạn (tàu thăm dò, chiến hạm… đều được), không cần tàu chuyên dụng. Tàu giao hàng xong sẽ tự mang hàng đổi lại về.</p>`;
+  const P=tmPlan();
+  if(!P)return h+'<div class="card dim">Chưa có nền văn minh nào để giao thương — hãy khám phá để gặp họ và giữ quan hệ không thù địch.</div>';
+  h+=`<div class="row" style="flex-wrap:wrap;gap:4px">${P.fl.map(i=>`<button class="chipb ${i===P.i?'on':''}" data-act="tmset" data-a="f" data-b="${i}" style="border-color:${FAC[i].col}">${FAC[i].n}</button>`).join('')}</div>`;
+  h+=`<div class="card" style="border-color:${FAC[P.i].col}"><b style="color:${FAC[P.i].col}">${FAC[P.i].n}</b> <span class="dim">· phí giao dịch ${Math.round(tmSpread(P.i)*100)}%</span>`+RKEYS.map(k=>{const d=tmD(P.i,k);return`<div class="row">${ic(k)}<span class="grow dim">kho ${fmt(P.mk.s[k])}</span><span class="${d>1.15?'bad':d<.9?'ok':'dim'}">${d>1.15?'▲ khan hiếm':d<.9?'▼ dư thừa':'● bình thường'}</span></div>`}).join('')+`</div>`;
+  const pick=(key,cur,ex)=>`<div class="row" style="flex-wrap:wrap;gap:3px">${RKEYS.filter(k=>k!==ex).map(k=>`<button class="chipb ${k===cur?'on':''}" data-act="tmset" data-a="${key}" data-b="${k}">${ic(k)}</button>`).join('')}</div>`;
+  h+=`<h4>Bạn gửi</h4>${pick('g',P.g,null)}<div class="row" style="flex-wrap:wrap;gap:3px;margin-top:3px">${[100,250,500,1000,2000].map(n=>`<button class="chipb ${P.a===n?'on':''}" data-act="tmset" data-a="a" data-b="${n}">${n}</button>`).join('')}<button class="chipb" data-act="tmset" data-a="a" data-b="max">Tối đa</button></div>`;
+  h+=`<h4>Bạn nhận</h4>${pick('t',P.t,P.g)}`;
+  h+=`<h4>Tàu chở hàng (từ hành tinh)</h4><div class="row" style="flex-wrap:wrap;gap:3px">${P.srcs.map(p=>`<button class="chipb ${P.src&&p.id===P.src.id?'on':''}" data-act="tmset" data-a="s" data-b="${p.id}">${p.name} (${Math.floor(tmCap(p.ships))})</button>`).join('')||'<span class="dim">Chưa có tàu.</span>'}</div>`;
+  if(P.src&&P.tp){
+    h+=`<div class="card">Gửi <b>${fmt(P.a)}</b> ${ic(P.g)} → nhận ≈ <b>${fmt(P.back)}</b> ${ic(P.t)} <span class="dim">(1 : ${P.rate.toFixed(2)})</span><br>`
+      +(P.pick?`Tàu chở: ${Object.entries(P.pick).map(([k,n])=>SH[k].n+' ×'+n).join(', ')} · `:'')
+      +`Tới ${P.tp.name} sau <b>${fmtT(P.dur)}</b> · Nhiên liệu <span class="${G.res.f>=P.fuel?'':'bad'}">${ic('f')}${P.fuel}</span>${P.err?`<div class="bad">${P.err}</div>`:''}</div><button class="pri" data-act="tmgo" ${P.err?'disabled':''}>Gửi hàng</button>`;
+  }else if(P.err)h+=`<div class="card bad">${P.err}</div>`;
+  return h;
+}
 function pTl(){
   const st=factionStats(),tot=G.planets.length,unk=G.planets.filter(p=>SYS(p.sys).st<2&&p.owner!==0).length;
   const share=G.planets.filter(p=>p.owner===0).length/tot;
@@ -1873,6 +1931,15 @@ function act(a,A,B,C){
     case'coop':{const q=PL(+A);if(!q||q.race<0||q.att!=='coop'||q.coop||!q.surveyed||q.owner===0)break;const c=dipCost(.6);if(!afford(c))break;pay(c);setCoop(q);break}
     case'vassal':{const q=PL(+A);if(!q||q.race<0||q.att!=='dep'||q.vassal||!q.surveyed||q.owner!==-1)break;const c=dipCost(.5);if(!afford(c))break;pay(c);q.vassal=true;addLog(`🙇 ${RACES[q.race].n} tại ${q.name} nhận bảo hộ và bắt đầu cống nạp.`,'good');break}
     case'gotab':UI.tab=A;if(B!=null&&B!=='undefined')UI.hdp=+B;break;
+    case'tmset':{const T=UI.tm=UI.tm||{};
+      if(A==='f'||A==='s')T[A]=+B;
+      else if(A==='a'){if(B==='max'){const P=tmPlan();if(P&&P.src){const cap=tmCap(P.src.ships),r=Math.max(P.rate,1e-6);T.a=Math.max(1,Math.floor(Math.min(G.res[P.g],cap/Math.max(1,r),P.mk.s[P.t]*.6/r)))}}else T.a=+B}
+      else if(A==='g'){T.g=B;if(T.t===B)T.t=null}
+      else T[A]=B;
+      break}
+    case'tmgo':{const P=tmPlan();if(!P||P.err)break;if(!launch(P.src,P.tp.sys,P.tp.id,'trade',P.pick)){showToast('Không đủ nhiên liệu.','warn');break}
+      G.res[P.g]-=P.a;P.mk.s[P.t]-=P.back;G.fleets[G.fleets.length-1].deal={fac:P.i,g:P.g,a:P.a,t:P.t,b:P.back};
+      addLog(`Đã gửi ${P.a} ${RLAB[P.g][0]} đi giao thương với ${FAC[P.i].n} (đổi ≈ ${P.back} ${RLAB[P.t][0]}).`,'info',false);showToast('Tàu chở hàng đã xuất phát!','info');break}
     case'hdsel':UI.hdp=+A;break;
     case'hpf':UI.hpf=A;break;
     case'qb':{const keep=UI.pl;UI.pl=+A;act('bld',B);UI.pl=keep;return}
@@ -1893,7 +1960,7 @@ function act(a,A,B,C){
     case'truce':{const i=+A,F=G.facs[i],c=dipCost(1);if(!afford(c)||G.t<F.truce)break;pay(c);F.truce=G.t+900*(1+.25*G.tech.diplo+fx('truceLen'));F.rel=Math.min(100,F.rel+8);addLog('Đã ký hiệp ước hòa bình với '+FAC[i].n+'.','good');break}
     case'gift':{const i=+A,F=G.facs[i],c=dipCost(.8);if(!afford(c))break;pay(c);F.rel=Math.min(100,F.rel+(pol('diplo')?20:15)+fx('gift'));addLog('Đã tặng quà cho '+FAC[i].n+'. Quan hệ cải thiện.','good');break}
     case'ally':{const i=+A,F=G.facs[i],c=dipCost(3);if(F.ally||F.rel<60||!afford(c))break;pay(c);F.ally=true;allyVision(i);addLog('🤝 Liên minh với '+FAC[i].n+'! Họ chia sẻ bản đồ lãnh thổ.','good');checkWin();break}
-    case'recall':{const f=G.fleets.find(x=>x.id===+A);if(f&&f.phase==='out'){const u0=clamp((G.t-f.t0)/(f.t1-f.t0),0,1),el=Math.max(1,u0*f.dur);f.u0=u0;f.phase='back';f.t0=G.t;f.t1=G.t+el;f.dur=f.dur;addLog('Hạm đội được triệu hồi.','info',false)}break}
+    case'recall':{const f=G.fleets.find(x=>x.id===+A);if(f&&f.phase==='out'){if(f.deal)f.deal.cancel=true;const u0=clamp((G.t-f.t0)/(f.t1-f.t0),0,1),el=Math.max(1,u0*f.dur);f.u0=u0;f.phase='back';f.t0=G.t;f.t1=G.t+el;f.dur=f.dur;addLog('Hạm đội được triệu hồi.','info',false)}break}
   }
   if(window.__HEADLESS)return;
   renderPanel();renderTop();

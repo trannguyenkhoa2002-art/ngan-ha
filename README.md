@@ -25,3 +25,4 @@ Rồi mở `http://localhost:8765`. Thêm `?dev` vào đường dẫn để hi�
 - Nghiên cứu được rút ngắn 80% ở cấp đầu; thời gian mỗi cấp sau tăng ×1,35. Bản lưu cũ tự cập nhật thời gian nghiên cứu đang làm, giữ nguyên phần trăm tiến độ.
 - Tàu thực dân dùng một lần khi lập thuộc địa thành công: giá cơ bản 240 kim loại, 160 tinh thể, 80 nhiên liệu; tăng 20% giá cơ bản cho mỗi thuộc địa đang sở hữu ngoài hành tinh đầu tiên, trước các ưu đãi.
 - 36 chủng tộc với thái độ hợp tác / lệ thuộc / chống đối; 91 công nghệ; các thế lực AI học hỏi, thích nghi, lập liên minh chống bá chủ; Bầy Hư Không trỗi dậy theo chu kỳ.
+- Thương mại liên sao: tab "Thương mại" cho đổi 4 nguyên liệu với các nền văn minh đã gặp (giá đổi theo khan hiếm/dư thừa và quan hệ). Hàng chở bằng chính tàu của bạn (mọi loại trừ tàu thực dân), tàu giao xong tự mang hàng đổi lại về; không có tàu giao hàng riêng.
