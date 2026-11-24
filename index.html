@@ -852,7 +852,7 @@ function step(dt){
     while(p.yq.length&&G.t>=p.yq[0].end){const q=p.yq.shift();p.ships[q.k]=(p.ships[q.k]||0)+1;if(!p.yq.some(x=>x.k===q.k))addLog(`${SH[q.k].n} đã sẵn sàng tại ${p.name}.`,'info',false)}
   });
   if(G.rq&&G.t>=G.rq.end){const tb0=tierMap();G.tech[G.rq.k]++;fxRefresh();{const tb1=tierMap();for(const sk in tb1)if(tb1[sk]>tb0[sk])addLog(`🛠 ${SH[sk].n} nâng lên Mk ${ROMN[tb1[sk]]} — thiết kế tàu mới!`,'good')}addLog(`Nghiên cứu xong: ${TECH[G.rq.k].n} cấp ${G.tech[G.rq.k]}.`,'good');G.rq=null}
-  G.fleets.slice().forEach(f=>{if(G.t>=f.t1)f.phase==='out'?fleetArrive(f):fleetHome(f)});
+  G.fleets.slice().forEach(f=>{if(f.phase==='park'||f.t1>1e12){f.phase='back';f.u0=1;f.t0=G.t;f.t1=G.t+Math.max(5,f.dur||30);delete f.fs;delete f.ftp;delete f.fo}if(G.t>=f.t1)f.phase==='out'?fleetArrive(f):fleetHome(f)});
   if(!catchup)G.raids=G.raids.filter(x=>{if(G.t>=x.t){resolveRaid(x);return false}return true});
   if(G.t>=G.nextEv){G.nextEv=G.t+480+Math.random()*360;if(!catchup)randomEvent()}
   G.qacc+=dt*(G.tempo||1);if(G.qacc>=1){G.qacc=0;checkQuests()}
