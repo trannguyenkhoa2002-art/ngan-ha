@@ -584,6 +584,9 @@ function fleetArrive(f){
     }else addLog('Mục tiêu tấn công không còn là kẻ thù.','info');
   }
   if(!sh(f.ships)){G.fleets=G.fleets.filter(x=>x!==f);return}
+  if(tp&&tp.owner===0){ // đích là hành tinh của mình (kể cả vừa chiếm/thực dân): tàu ở lại đóng quân
+    for(const k in f.ships)tp.ships[k]=(tp.ships[k]||0)+f.ships[k];
+    addLog(`Hạm đội đã đóng quân tại ${tp.name}.`,'info',false);G.fleets=G.fleets.filter(x=>x!==f);return}
   f.phase='back';f.t0=G.t;f.t1=G.t+f.dur;
 }
 function setCoop(q){
