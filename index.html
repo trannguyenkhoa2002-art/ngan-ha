@@ -363,7 +363,7 @@ function restoreFac(){FAC.length=6;(G.nf||[]).forEach(f=>{FAC.push(f);if(!f.pal)
 const CAPN=['','Blackstar Prime','Cloudhaven Prime','Goldspire Prime','Eclipse Prime'];
 const DIFF=[{n:'Dễ',raid:.7,grow:.7,res:1.6},{n:'Thường',raid:1,grow:1,res:1},{n:'Khó',raid:1.4,grow:1.4,res:.7}];
 const START_RES={m:1500,c:900,f:500,r:100};
-const BAL={facSystems:10,facReach:560,raidStart:900,invadeStart:2600,homeSiege:5200,crisisGap:6000,raidGap:[800,600],timeMul:1.5,researchTimeMul:.2,researchLevelMul:1.35,colonySurcharge:.2,earlyT:1200,fleetSpd:2.2,npcGrow:.5,slots:[16,22,28],homeSlots:34,queueMax:3,sprawl:.12,upkeep:.001,capDiv:.12,crisisT:8600,crisisShare:.15,crisisWarn:900,crisisLose:.4};
+const BAL={mineMul:3,facSystems:10,facReach:560,raidStart:900,invadeStart:2600,homeSiege:5200,crisisGap:6000,raidGap:[800,600],timeMul:1.5,researchTimeMul:.2,researchLevelMul:1.35,colonySurcharge:.2,earlyT:1200,fleetSpd:2.2,npcGrow:.5,slots:[16,22,28],homeSlots:34,queueMax:3,sprawl:.12,upkeep:.001,capDiv:.12,crisisT:8600,crisisShare:.15,crisisWarn:900,crisisLose:.4};
 const STARCOL=['#ffe9a8','#ffb98a','#a8d0ff','#ffffff'];
 
 /* ======================= TẠO THẾ GIỚI ======================= */
@@ -502,12 +502,12 @@ const totalCap=()=>Math.round(own().reduce((a,p)=>a+capOf(p),0)/(1+BAL.capDiv*(o
 function pinfo(p){
   const b=p.b,e=x=>Math.pow(1.12,x),g=l=>l*Math.pow(1.13,l),eco=1+.08*G.tech.eco,em=1/(1+BAL.sprawl*(pol('expand')?.6:1)*(own().length-1)),pp=(pol('mil')?.92:1)*(pol('def')?.95:1)*(1+.8*early())*(1-Math.min(.6,(p.unrest||0)/100*.6)),tb=(1+.04*G.tech.trade*friendCount())*(1+.05*G.tech.xenotech)*(1+fx('prodAll'));
   const gen=22*b.pow*e(b.pow)*(1+.15*G.tech.fusion+fx('energy'))*rmf(p,'e'),need=(10*b.mine*e(b.mine)+10*b.cry*e(b.cry)+14*b.fuel*e(b.fuel)+16*b.rare*e(b.rare))*Math.max(.5,1-fx('energyUse'));
-  const eff=need>0?Math.min(1,(gen+10)/need):1,base=p.home?1:.4;
+  const eff=need>0?Math.min(1,(gen+10)/need):1,base=p.home?1:.4,MM=BAL.mineMul;
   return{gen:gen+10,need,eff,
-    m:(.3*base+.7*g(b.mine)*eff)*PR*p.mult.m*rmf(p,'m')*eco*em*pp*tb*(1+.1*G.tech.mining+fx('prodM'))*(pol('trade')?1.15:1),
-    c:(.15*base+.5*g(b.cry)*eff)*PR*p.mult.c*rmf(p,'c')*eco*em*pp*tb*(1+.1*G.tech.optics+fx('prodC'))*(pol('trade')?1.15:1),
-    f:(.05*base+.35*g(b.fuel)*eff)*PR*p.mult.f*rmf(p,'f')*eco*em*pp*tb*(1+.1*G.tech.gasex+fx('prodF')),
-    r:(.02*base+.25*g(b.rare)*eff)*PR*p.mult.r*rmf(p,'r')*eco*em*pp*tb};
+    m:(.3*base+.7*g(b.mine)*eff)*PR*p.mult.m*rmf(p,'m')*eco*em*pp*tb*(1+.1*G.tech.mining+fx('prodM'))*(pol('trade')?1.15:1)*MM,
+    c:(.15*base+.5*g(b.cry)*eff)*PR*p.mult.c*rmf(p,'c')*eco*em*pp*tb*(1+.1*G.tech.optics+fx('prodC'))*(pol('trade')?1.15:1)*MM,
+    f:(.05*base+.35*g(b.fuel)*eff)*PR*p.mult.f*rmf(p,'f')*eco*em*pp*tb*(1+.1*G.tech.gasex+fx('prodF'))*MM,
+    r:(.02*base+.25*g(b.rare)*eff)*PR*p.mult.r*rmf(p,'r')*eco*em*pp*tb*MM};
 }
 const upkeepF=()=>{let u=0;own().forEach(p=>{for(const k in p.ships)u+=p.ships[k]*SH[k].f});G.fleets.forEach(f=>{for(const k in f.ships)u+=f.ships[k]*SH[k].f});return u*BAL.upkeep*Math.max(.4,1-.08*G.tech.cargo-fx('fuelUse'))};
 function rates(){fxRefresh();const r={m:0,c:0,f:0,r:0};own().forEach(p=>{const i=pinfo(p);r.m+=i.m;r.c+=i.c;r.f+=i.f;r.r+=i.r});{const tr=friendCount()*fx('tribute');r.m+=tr;r.c+=tr*.7;r.f+=tr*.3}
