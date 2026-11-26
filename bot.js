@@ -51,9 +51,9 @@ function runGame(seed,diff,maxT,stopC){
         if(p.b[k]<tg[k]){N.act('bld',k);if(p.bq.length>=2)return}
       }
     });
-    if(!G.rq){
-      for(const k of TECHORDER){N.act('res',k);if(G.rq)break}
-      if(!G.rq){const ks=Object.keys(G.tech).sort((a,b)=>G.tech[a]-G.tech[b]);for(const k of ks){N.act('res',k);if(G.rq)break}}
+    {const full=()=>(G.rqs||[]).length>=N.resSlots();
+      for(const k of TECHORDER){if(full())break;N.act('res',k)}
+      if(!full()){const ks=Object.keys(G.tech).sort((a,b)=>G.tech[a]-G.tech[b]);for(const k of ks){if(full())break;N.act('res',k)}}
     }
     if(G.pol.length<N.polSlots()&&G.t>=G.polCd){const pick=['expand','def','trade'].find(k=>!G.pol.includes(k));if(pick)N.act('pol',pick)}
   }
