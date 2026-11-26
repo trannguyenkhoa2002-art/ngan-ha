@@ -514,7 +514,7 @@ function pinfo(p){
 }
 const upkeepF=()=>{let u=0;own().forEach(p=>{for(const k in p.ships)u+=p.ships[k]*SH[k].f});G.fleets.forEach(f=>{for(const k in f.ships)u+=f.ships[k]*SH[k].f});return u*BAL.upkeep*Math.max(.4,1-.08*G.tech.cargo-fx('fuelUse'))};
 function rates(){fxRefresh();const r={m:0,c:0,f:0,r:0};own().forEach(p=>{const i=pinfo(p);r.m+=i.m;r.c+=i.c;r.f+=i.f;r.r+=i.r});{const tr=friendCount()*fx('tribute');r.m+=tr;r.c+=tr*.7;r.f+=tr*.3}
-  G.planets.forEach(q=>{if(q.vassal&&q.owner===-1){const k=.3*PR;r.m+=(q.mult.m||0)*k;r.c+=(q.mult.c||0)*k;r.f+=(q.mult.f||0)*k;r.r+=(q.mult.r||0)*k*.5}});r.up=upkeepF();r.f-=r.up;return r}
+  G.planets.forEach(q=>{if(q.vassal&&q.owner===-1){const k=.3*PR*(1+.2*((q.nc&&q.nc.lv)||0));r.m+=(q.mult.m||0)*k;r.c+=(q.mult.c||0)*k;r.f+=(q.mult.f||0)*k;r.r+=(q.mult.r||0)*k*.5}});r.up=upkeepF();r.f-=r.up;return r}
 const sh=(ships)=>Object.values(ships).reduce((a,n)=>a+n,0);
 function fstats(ships){fxRefresh();let atk=0,hp=0;for(const k in ships){const dd=SH[k],cc=dd.cls;atk+=ships[k]*dd.atk*(cc==='light'?1+.12*G.tech.drone:1)*(1+fx('atk_'+cc));hp+=ships[k]*dd.hp*(1+fx('hp_'+cc))}return{atk:atk*(1+.1*G.tech.weapon+.08*G.tech.missile+.1*G.tech.plasma+.12*G.tech.antimatter+.05*G.tech.xenotech+fx('atkAll'))*(pol('mil')?1.1:1)*(pol('trade')?.95:1)*(pol('peace')?.9:1)*(pol('diplo')?.95:1),hp:hp*(1+.1*G.tech.armor+.1*G.tech.shield+.05*G.tech.xenotech+fx('hpAll'))*(pol('sci')?.95:1)*(pol('expand')?.95:1)}}
 const kfac=(c,d,b=0)=>!c||!d||c===d||d==='mixed'||c==='mixed'?1:BEATS[c]===d?1.35+b:BEATS[d]===c?.75+b*.5:1;
@@ -762,7 +762,7 @@ function nfSpawnOne(why,gap){
 }
 function nfTick(){
   G.nfT=(G.nfT||0)+10;if(G.nfT<600)return;G.nfT=0;
-  if(aiIds().filter(i=>i>5&&facAlive(i)).length>=NF_MAX||Math.random()>.7*(1-G.t/8000))return;
+  if(aiIds().filter(i=>i>5&&facAlive(i)).length>=NF_MAX||Math.random()>.35*(1-G.t/8000))return;
   nfSpawnOne('tự phát triển thành thế lực',160);
 }
 function warDeclare(){
@@ -940,6 +940,81 @@ function aiLine(i){
   if(!isAI(i)||!facAlive(i))return'';const A=aiOf(G.facs[i]),pc=pactsOf(i).filter(o=>G.facs[o].known);
   return`<div>Tính cách: <b>${PERS[A.p].n}</b> · Ý đồ: <span class="${A.g==='raid'||A.g==='revenge'?'bad':A.g==='peace'?'ok':'acc'}">${GOALN[A.g]||A.g}</span>${pc.length?` · Hiệp ước với ${pc.map(o=>FAC[o].n).join(', ')}`:''}</div>`;
 }
+/* ======================= NỀN VĂN MINH BẢN ĐỊA ======================= */
+const NCLV=['Bộ lạc','Thành bang','Vương quốc','Công nghiệp','Tiền vũ trụ'];
+const NCG={grow:'Phát triển kinh tế',arm:'Xây dựng quân đội',conq:'Thôn tính láng giềng',raid:'Quấy rối thuộc địa của bạn',trade:'Giao thương với bạn',ascend:'Chuẩn bị bước ra vũ trụ',defend:'Phòng thủ'};
+const WARM=/Hiếu chiến|Chiến binh|Hung dữ|Nóng nảy|Săn mồi|Tàn nhẫn|Cuồng nhiệt|Kiêu hãnh|Âm hiểm|Mưu lược/,ECOM=/Cần mẫn|Cần lao|Thương nhân|Thợ rèn|Uyên bác|Logic|Tập thể|Kiên nhẫn|Cổ xưa/;
+const isNat=p=>p.owner===-1&&p.race>=0&&!p.home;
+function ncOf(p){if(!p.nc){const lv=p.ndp>85?2:p.ndp>58?1:0;p.nc={lv,xp:Math.random()*.5,g:'grow',nt:G.t+60+(p.id*37)%400,lord:p.id}}return p.nc}
+const ncIsLord=L=>L&&isNat(L)&&!L.vassal&&ncOf(L).lord===L.id;
+const ncLord=p=>{const L=PL(ncOf(p).lord);return ncIsLord(L)?L:p};
+const ncMembers=L=>G.planets.filter(q=>q!==L&&q.nc&&q.nc.lord===L.id&&isNat(q)&&!q.vassal);
+const ncPow=L=>[L,...ncMembers(L)].reduce((a,q)=>a+Math.max(q.dp||0,q.ndp||0),0);
+const ncStat=k=>{G.ncst=G.ncst||{};G.ncst[k]=(G.ncst[k]||0)+1};
+function nativeTick(){
+  G.ncT=(G.ncT||0)+10;if(G.ncT<50)return;G.ncT=0;G.nfl=G.nfl||[];
+  G.planets.forEach(p=>{if(!isNat(p))return;const c=ncOf(p);if(c.lord!==p.id&&!ncIsLord(PL(c.lord)))c.lord=p.id});
+  G.planets.forEach(p=>{if(isNat(p)&&p.nc.lord===p.id&&G.t>=p.nc.nt){p.nc.nt=G.t+400;ncThink(p)}});
+  G.nfl.slice().forEach(f=>{if(G.t>=f.t)ncResolve(f)});
+}
+function ncThink(L){
+  const c=L.nc,R=RACES[L.race],mem=ncMembers(L),war=WARM.test(R.mood),eco=ECOM.test(R.mood),vis=SYS(L.sys).st===2&&!catchup;
+  c.xp+=.1*(c.g==='grow'||c.g==='trade'?2.2:c.g==='ascend'?2.6:1)*(1+.25*mem.length)*(eco?1.25:1);
+  if(c.xp>=1&&c.lv<4){c.lv++;c.xp=0;L.ndp=Math.min(260,(L.ndp||30)+15);if(L.att==='host')L.dp=Math.max(L.dp,L.ndp*.8);ncStat('lv'+c.lv);if(vis&&L.surveyed)addLog(`📈 Dân ${R.n} tại ${L.name} bước vào thời kỳ ${NCLV[c.lv]}.`,'info',false)}
+  if(L.vassal){c.g='grow';return}
+  // bước ra vũ trụ → thành thế lực mới
+  if(c.lv>=4&&c.xp>=.6&&(mem.length>=1||c.xp>=1.1)&&G.t>600&&aiIds().filter(i=>i>5&&facAlive(i)).length<NF_MAX){
+    const wasCoop=L.coop,att=L.att,id=spawnFac(L,'nền văn minh bản địa bước vào kỷ nguyên vũ trụ');
+    G.facs[id].rel=FAC[id].rel0=wasCoop?55:att==='host'?-45:att==='dep'?10:0;G.facs[id].ready=.7;
+    mem.forEach(q=>{q.owner=id;q.dp=Math.max(30,q.ndp||30);q.coop=false;q.capital=false});
+    ncStat('rise');
+    if(G.facs[id].known||vis)addLog(`🚀 Nền văn minh ${R.n} tại ${L.name} bước ra vũ trụ — trở thành thế lực ${FAC[id].n}${mem.length?` cùng ${mem.length} hành tinh chư hầu`:''}!${wasCoop?' Họ nhớ ơn sự hợp tác của bạn.':''}`,'warn');
+    return;
+  }
+  const myP=ncPow(L)+1,d=q=>dist(SYS(L.sys),SYS(q.sys));
+  // láng giềng bản địa độc lập yếu hơn
+  let T=null,ts=-1,threat=0;
+  G.planets.forEach(q=>{if(q===L||!ncIsLord(q)||d(q)>260)return;const pw=ncPow(q)+1;if(pw>myP*1.2)threat+=.5;if(pw<myP*.75){const sc=myP/pw-d(q)/300;if(sc>ts){ts=sc;T=q}}});
+  if(G.nfl.some(f=>f.pid===L.id||mem.some(m=>m.id===f.pid)))threat+=1;
+  const pNear=own().filter(q=>dist(SYS(q.sys),SYS(L.sys))<320).sort((a,b)=>d(a)-d(b));
+  const U={grow:eco?1.1:.8,arm:(war?.7:.35)+threat*.5,defend:threat*.45};
+  U.conq=T&&c.lv>=1&&!G.nfl.some(f=>f.k===L.id)?(war?1.4:.6)*Math.max(0,Math.min(2,ts)-.4):0;
+  U.raid=L.att==='host'&&pNear.length&&c.lv>=1&&G.t>=BAL.raidStart&&G.t>=(c.rt||0)&&!G.raids.some(r=>r.nat===L.id)?(war?.8:.35):0;
+  U.trade=L.coop&&pNear.length?(eco?1.2:.9):0;
+  U.ascend=c.lv>=4?1.6:0;
+  let g='grow',bv=-1;for(const k in U){const v=U[k]*(.85+Math.random()*.3);if(v>bv){bv=v;g=k}}
+  c.g=g;ncStat(g);
+  const cap=70+45*c.lv;
+  if(g==='arm'||g==='defend'){L.ndp=Math.min(cap,(L.ndp||30)*(g==='arm'?1.1:1.05)+4);if(L.att==='host')L.dp=Math.min(L.ndp,(L.dp||0)+L.ndp*.2)}
+  if(g==='conq'&&T){
+    const dd=d(T),fl=dd/(140*BAL.fleetSpd),dur=raidDur(dd),S=myP*.8*(.8+Math.random()*.4);L.ndp=Math.max(15,L.ndp*.92);
+    G.nfl.push({k:L.id,o:L.sys,pid:T.id,S,t0:G.t,l:G.t+dur-Math.max(1,fl),t:G.t+dur});
+    if((vis||SYS(T.sys).st===2)&&!catchup)addLog(`⚔ Dân ${R.n} (${NCLV[c.lv]}) từ ${L.name} kéo quân đánh ${T.name}.`,'info',false);
+  }
+  if(g==='raid'&&!catchup){
+    c.rt=G.t+1600;const tg=pNear[0],dd=d(tg),fl=dd/(140*BAL.fleetSpd),dur=raidDur(dd);
+    G.raids.push({t0:G.t,t:G.t+dur,l:G.t+dur-Math.max(1,fl),o:L.sys,fac:-1,pid:tg.id,S:Math.max(12,.35*(L.ndp||30)*(1+.15*c.lv)),invade:false,nat:L.id});
+    addLog(`⚔ Dân ${R.n} (${NCLV[c.lv]}) từ ${L.name} kéo quân quấy rối ${tg.name} (còn ${fmtT(dur)}).`,'warn');
+  }
+  if(g==='trade'){const a=25*(1+c.lv)*(eco?1.3:1);G.res.m+=a;G.res.c+=a*.6;G.res.f+=a*.3;if(!catchup)addLog(`🐪 Thương đoàn ${R.n} từ ${L.name} mang tới +${Math.round(a)} KL, +${Math.round(a*.6)} TT, +${Math.round(a*.3)} NL.`,'info',false)}
+}
+function ncResolve(f){
+  G.nfl=G.nfl.filter(x=>x!==f);const A=PL(f.k),T=PL(f.pid);if(!ncIsLord(A)||!T||!isNat(T)||T.vassal)return;
+  const TL=ncLord(T),RA=RACES[A.race],vis=(SYS(T.sys).st===2||SYS(A.sys).st===2)&&!catchup;
+  const def=Math.max(T.ndp||0,T.dp||0)*1.1+(TL!==T||ncMembers(T).length?.2*ncPow(TL):0),att=f.S*(.85+Math.random()*.3);
+  if(att>def){
+    const moved=[T,...(TL===T?ncMembers(T):[])];
+    moved.forEach(q=>{ncOf(q).lord=A.id;q.nc.g='grow';q.ndp=Math.max(20,(q.ndp||30)*.75);
+      if(q.coop&&A.att!=='coop'){q.coop=false;addLog(`⚠ ${q.name} bị dân ${RA.n} chinh phục — hiệp ước hợp tác của bạn ở đó bị hủy.`,'warn')}
+      q.att=A.att;q.dp=q.att==='host'?q.ndp:0});
+    ncStat('conqWin');
+    if(vis)addLog(`👑 Dân ${RA.n} tại ${A.name} chinh phục ${T.name}${moved.length>1?` cùng ${moved.length-1} hành tinh chư hầu`:''}.`,'info',false);
+  }else{A.ndp=Math.max(15,A.ndp*.9);T.ndp=Math.max(15,T.ndp*.9);if(T.att==='host')T.dp=Math.min(T.dp,T.ndp);ncStat('conqFail');if(vis)addLog(`🛡 ${T.name} đẩy lùi quân dân ${RA.n} từ ${A.name}.`,'info',false)}
+}
+function civH(p){
+  if(!p.surveyed||!isNat(p))return'';const L=ncLord(p),c=L.nc,m=ncMembers(L).length;
+  return`<div style="margin-top:3px">🏛 Nền văn minh: <b>${NCLV[c.lv]}</b> <span class="dim">(tiến độ ${Math.round(Math.min(1,c.xp)*100)}%)</span>${L!==p?` · thuộc vương quốc của <b>${L.name}</b>`:m?` · cai trị ${m} hành tinh`:''}<br>Ý đồ: <span class="${c.g==='raid'?'bad':c.g==='trade'?'ok':'acc'}">${NCG[c.g]}</span>${c.lv>=3&&!p.vassal?' <span class="bad">— sắp trở thành thế lực vũ trụ!</span>':''}</div>`;
+}
 function npcTick(){
   crisisTick();
   {const share=own().length/G.planets.length;
@@ -957,13 +1032,13 @@ function npcTick(){
   G.planets.forEach(p=>{
     if(!isHost(p))return;
     if(p.dp<p.ndp)p.dp=Math.min(p.ndp,p.dp+.02*p.ndp);
-    if(!catchup&&p.surveyed&&Math.random()<.003){
+    if(false){
       const near=own().filter(q=>dist(SYS(q.sys),SYS(p.sys))<300).sort((a,b)=>dist(SYS(a.sys),SYS(p.sys))-dist(SYS(b.sys),SYS(p.sys)))[0];
       if(near){G.raids.push({t0:G.t,t:G.t+50,o:p.sys,fac:-1,pid:near.id,S:Math.max(12,.35*p.ndp),invade:false});addLog(`⚔ Dân ${RACES[p.race].n} chống đối quấy rối ${near.name} từ ${p.name} (còn ${fmtT(50)}).`,'warn')}
     }
   });
   G.warT=(G.warT||0)+10;if(G.warT>=150){G.warT=0;if(G.crisis.state!==2&&(!G.coalition||Math.random()<.5)){warDeclare();if(Math.random()<.3)warDeclare()}}
-  warTick();nfTick();
+  warTick();nfTick();nativeTick();
   if(G.tech.deepscan>0){const key=G.tech.deepscan+':'+own().map(p=>p.id).join(',');if(key!==G.scanKey){G.scanKey=key;own().forEach(p=>scanAround(SYS(p.sys).x,SYS(p.sys).y,60+60*G.tech.deepscan))}}
   G.facs.forEach(F=>{if(F.ally)allyVision(F.id)});
   G.facs.forEach(F=>{
@@ -1744,6 +1819,14 @@ function draw(){
     ctx.save();ctx.translate(sx|0,sy|0);ctx.rotate(Math.atan2(by-ay,bx-ax));if(u>0)engineFlame(sz2,col,f.t0);ctx.drawImage(shipCanvas(kd,Math.min(4,tr),col),-sz2/2,-sz2/2,sz2,sz2);ctx.restore();
     ctx.fillStyle=col;ctx.font='bold 10px "Courier New"';ctx.textAlign='center';ctx.fillText('⚔',sx,sy-10);
   });
+  (G.nfl||[]).forEach(f=>{
+    const A=PL(f.k),a=SYS(f.o),b=SYS(PL(f.pid).sys);if(a.st<2&&b.st<2)return;
+    const u=raidU(f),[sx,sy]=w2s(a.x+(b.x-a.x)*u,a.y+(b.y-a.y)*u),[ax,ay]=w2s(a.x,a.y),[bx,by]=w2s(b.x,b.y),col=RACES[A.race]?RACES[A.race].a:'#ccc';
+    ctx.globalAlpha=.4;ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+    const sz2=Math.max(12,Math.round(16*cam.z*.9));
+    ctx.save();ctx.translate(sx|0,sy|0);ctx.rotate(Math.atan2(by-ay,bx-ax));ctx.drawImage(shipCanvas('fighter',1,col),-sz2/2,-sz2/2,sz2,sz2);ctx.restore();
+    ctx.fillStyle=col;ctx.font='bold 10px "Courier New"';ctx.textAlign='center';ctx.fillText('⚔',sx,sy-9);
+  });
   const tn=nowS();
   for(let i=FX.length-1;i>=0;i--){
     const e=FX[i],t=(tn-e.t0)/e.dur;if(t>1){FX.splice(i,1);continue}
@@ -1804,6 +1887,7 @@ function lifeH(p){
   if(p.race<0)return`<div style="margin-top:4px">🌱 Sinh quyển: <b>${p.bio}</b> <span class="dim">(chưa có trí tuệ)</span></div>`;
   const r=RACES[p.race],own=p.owner===0,AT=p.home?['👑 Chủ nhà','#4db8ff']:{coop:['🤝 Hợp tác','#5be08a'],dep:['🙇 Lệ thuộc','#ffd24d'],host:['⚔ Chống đối','#ff6b6b']}[p.att];
   let h=`<div style="margin-top:6px;border-top:1px dashed var(--line);padding-top:6px"><div class="row"><img class="shp" style="width:64px;height:64px" src="${raceURL(p.race)}"><div class="grow"><b>👥 ${r.n}</b> <span class="tag" style="background:${r.a}">${r.mood}</span> <span class="tag" style="background:${AT[1]}">${AT[0]}</span><br><span class="dim">${r.desc}</span></div></div>${raceAttrs(r).map(t=>attrLine(t,own)).join('')}`;
+  h+=civH(p);
   if(own){
     h+=`<div class="ok" style="margin-top:2px">✔ Dân ${r.n} đang sống ở đây — thuộc tính có hiệu lực.</div>`;
     if(p.att==='coop'&&!p.home)h+=`<div class="ok">🤝 Hợp tác: chia sẻ công nghệ ${SPEC[p.race]} và nghiên cứu.</div>`;
@@ -2318,7 +2402,7 @@ resize();
 if(!load()){newGame(Math.floor(Math.random()*1e9),1,100);UI.sys=0;UI.pl=0}
 else{UI.sys=0;UI.pl=0}
 cam.z=1;focus(SYS(0).x,SYS(0).y);
-window.__NH={aiOf,resSlots,garrOf,shipyardH,routeDist,sameSysPos,orbPos,defEstimate,needS,scheduleRaid,adaptDoc,checkDefeat,RANKS,facDoc,hiveD,isHost,setCoop,assaultNatives,coopSpec,SPEC,ATN,RACES,raceURL,raceAttrs,surveyPlanet,genMult,shipTier,shipURL,shipCanvas,tierMap,SHCOL,fx,fxRefresh,techDesc,TECH,get G(){return G},step,act,UI:()=>UI,launch,fstats,fight,npcDef,pinfo,rates,mulVs,mulOf,techReqOk,cam:()=>cam,fxBurst,fxBattle,fxRing,FX,startCrisis,spawnWave,endCrisis,crisisTick,expedition,reconPlanet,interceptRaid,knownDp,polSlots,POL,shipCost,newGame,BAL,DIFF,fmtT,rateStr,load,save,FACDOC:o=>facDoc(o),SHSPD:k=>SH[k].spd,spdMul};
+window.__NH={ncOf,ncLord,aiOf,resSlots,garrOf,shipyardH,routeDist,sameSysPos,orbPos,defEstimate,needS,scheduleRaid,adaptDoc,checkDefeat,RANKS,facDoc,hiveD,isHost,setCoop,assaultNatives,coopSpec,SPEC,ATN,RACES,raceURL,raceAttrs,surveyPlanet,genMult,shipTier,shipURL,shipCanvas,tierMap,SHCOL,fx,fxRefresh,techDesc,TECH,get G(){return G},step,act,UI:()=>UI,launch,fstats,fight,npcDef,pinfo,rates,mulVs,mulOf,techReqOk,cam:()=>cam,fxBurst,fxBattle,fxRing,FX,startCrisis,spawnWave,endCrisis,crisisTick,expedition,reconPlanet,interceptRaid,knownDp,polSlots,POL,shipCost,newGame,BAL,DIFF,fmtT,rateStr,load,save,FACDOC:o=>facDoc(o),SHSPD:k=>SH[k].spd,spdMul};
 renderPanel();renderTop();
 if(!G.intro)showIntro();
 requestAnimationFrame(frame);
